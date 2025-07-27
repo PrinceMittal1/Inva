@@ -29,6 +29,8 @@ const ChatListing = () => {
 
     useEffect(() => {
         if (focus) gettingAllChats();
+
+        
     }, [focus])
 
     const RenderItem = ({ item, index }: any) => {
