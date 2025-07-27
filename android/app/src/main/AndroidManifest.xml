@@ -10,6 +10,15 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true">
+      <meta-data
+        android:name="com.google.android.gms.auth.api.phone.SMS_CODE_AUTO_VERIFY_TIMEOUT"
+        android:value="120" />
+      <meta-data
+        android:name="com.google.android.gms.auth.api.phone.SMS_RETRIEVER_API"
+        android:value="true" />
+      <meta-data
+        android:name="com.google.android.gms.auth.api.signin.CLIENT_ID"
+        android:value="505647175641-pt780qgtf1folf9e73nk9r17mrf5l1ib.apps.googleusercontent.com" />
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
