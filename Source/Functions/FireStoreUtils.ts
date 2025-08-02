@@ -689,7 +689,7 @@ export default function useFireStoreUtil() {
             .where('customerId', '==', id)
             .get();
 
-        const chats:any = snapshot.docs.map(doc => ({
+        const chats: any = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
         }));
@@ -715,15 +715,38 @@ export default function useFireStoreUtil() {
             finalList.push({
                 chatId: chat.id,
                 business_name: sellerData?.businessName,
-                business_picture : sellerData?.profile_picture,
-                customer_name : customerData?.name,
-                customer_picture : customerData?.profile_picture,
+                business_picture: sellerData?.profile_picture,
+                customer_name: customerData?.name,
+                customer_picture: customerData?.profile_picture,
                 ...chat
             });
         }
 
         return finalList;
     };
+
+    const getProduct = async (id: string) => {
+        if (!id) return {};
+        try {
+            const productSnap = await firestore()
+                .collection(FireKeys?.Products) // FireKeys.Products should be your 'products' collection key
+                .doc(id)
+                .get();
+
+            const productData = productSnap.exists ? productSnap.data() : null;
+
+            if (!productData) {
+                console.warn("No product found with ID:", id);
+            } else {
+                console.log("Fetched product:", productData);
+            }
+
+            return productData;
+        } catch (error) {
+            console.error("Error fetching product:", error);
+            return null;
+        }
+    }
 
 
 
@@ -751,6 +774,7 @@ export default function useFireStoreUtil() {
         deletingCommentForTheProduct,
         addingCommentForNestedProduct,
         deletingCommentForTheProductForNesting,
-        gettingAllChats
+        gettingAllChats,
+        getProduct
     };
 }

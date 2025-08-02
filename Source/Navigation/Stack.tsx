@@ -12,6 +12,7 @@ import BottomTabs from "./BottomNavigation";
 import SellerProfile from "../Screens/SellerProfilePage";
 import WishList from "../Screens/WishList";
 import Chat from "../Screens/Chat";
+import ProductDetail from "../Screens/ProductDetailsScreen";
 
 const MainStack = () => {
     const Stack = createNativeStackNavigator();
@@ -25,6 +26,7 @@ const MainStack = () => {
             <Stack.Screen name={keys.SellerProfile} component={SellerProfile} />
             <Stack.Screen name={keys.WishList} component={WishList} />
             <Stack.Screen name={keys?.Chat} component={Chat} />
+            <Stack.Screen name={keys?.productDetail} component={ProductDetail} />
             <Stack.Screen name={keys.BottomBar} component={BottomTabs} />
         </Stack.Navigator>
         {loading && <Loader />}</>

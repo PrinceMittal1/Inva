@@ -17,7 +17,6 @@ const ChatListing = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
 
-
     const gettingAllChats = async () => {
         const result = await fireUtils?.gettingAllChats(user_id);
 
