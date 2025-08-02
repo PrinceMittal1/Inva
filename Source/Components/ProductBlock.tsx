@@ -83,8 +83,8 @@ const ProductBlock = ({
         }
     }
 
-    const toggleSavingToCompare = async () =>{
-        
+    const toggleSavingToCompare = async () => {
+
     }
 
 
@@ -156,7 +156,7 @@ const ProductBlock = ({
                     </View>}
                 </View>
 
-                <View style={{ height: wp(120), width: screenWidth * 0.90, borderRadius: 10, alignSelf: "center", marginTop: 10 }} >
+                <Pressable style={{ height: wp(120), width: screenWidth * 0.90, borderRadius: 10, alignSelf: "center", marginTop: 10 }} >
                     <FlatList
                         onMomentumScrollEnd={(event) => {
                             const contentOffsetX = event.nativeEvent.contentOffset.x;
@@ -172,7 +172,11 @@ const ProductBlock = ({
                         pagingEnabled
                         renderItem={({ item, index }: any) => {
                             return (
-                                <Pressable style={{ width: screenWidth * 0.90, height: wp(120), borderRadius: 10, overflow: "hidden", backgroundColor: 'grey' }}>
+                                <Pressable onPress={() => {
+                                    navigation.navigate(AppRoutes?.productDetail, {
+                                        productId: blockItem?.id
+                                    })
+                                }} style={{ width: screenWidth * 0.90, height: wp(120), borderRadius: 10, overflow: "hidden", backgroundColor: 'grey' }}>
                                     <FastImage
                                         style={styles.carImg}
                                         source={{ uri: item }}
@@ -199,7 +203,7 @@ const ProductBlock = ({
                                 />
                             ))}
                     </View>
-                </View>
+                </Pressable>
 
 
                 <View style={{ width: '95%', }}>
@@ -242,9 +246,9 @@ const ProductBlock = ({
                         </Pressable>
                     </View>
 
-                    <View style={{flexDirection:'row'}}>
+                    <View style={{ flexDirection: 'row' }}>
 
-                        <Pressable onPress={toggleSavingCollection} style={{marginLeft:10}}>
+                        <Pressable onPress={toggleSavingCollection} style={{ marginLeft: 10 }}>
                             <Image
                                 source={blockItem?.saved ? Images.savedFilled : Images.saved}
                                 style={styles.bottomIcon}
@@ -252,7 +256,7 @@ const ProductBlock = ({
                             />
                         </Pressable>
 
-                        <Pressable onPress={onSharePress} style={{marginLeft:10}}>
+                        <Pressable onPress={onSharePress} style={{ marginLeft: 10 }}>
                             <Image
                                 source={Images.share}
                                 style={styles.bottomIcon}

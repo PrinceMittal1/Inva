@@ -1,5 +1,5 @@
 import FastImage from "@d11/react-native-fast-image";
-import { Dimensions, Image, Platform, Pressable, StatusBar, Text, View } from "react-native"
+import { Dimensions, Image, Platform, Pressable, StatusBar, Text, View, PermissionsAndroid } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Dropdown from "../Components/DropDown";
 import { hp } from "../Keys/dimension";
@@ -14,6 +14,7 @@ import AppRoutes from "../Routes/AppRoutes";
 import { Country, State, City } from 'country-state-city';
 import Header from "../Components/Header";
 import { setUserData, setUserId } from "../Redux/Reducers/userData";
+import Geolocation from '@react-native-community/geolocation';
 
 
 const { width, height } = Dimensions.get('window')
@@ -33,6 +34,51 @@ const Profile = () => {
 
     const dispatch = useDispatch();
 
+
+    async function reverseGeocode(lat: number, lng: number) {
+        const apiKey = 'AIzaSyDK1ouABQADC7bV9YrQt319jf4LVHmOfeQ';
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const components = data.results[0].address_components;
+            const getComponent = (type: string) =>
+                components.find((c: any) => c.types.includes(type))?.long_name;
+            const city = getComponent('locality') || getComponent('administrative_area_level_2');
+            const state = getComponent('administrative_area_level_1');
+            const country = getComponent('country');
+            const postalCode = getComponent('postal_code');
+
+            console.log({ city, state, country, postalCode });
+        } catch (err) {
+            console.error('Geocoding error:', err);
+        }
+    }
+
+    async function getUserLocation() {
+        if (Platform.OS === 'android') {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            );
+            if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                console.warn('Location permission denied');
+                return;
+            }
+        }
+
+        Geolocation.getCurrentPosition(
+            position => {
+                const { latitude, longitude } = position.coords;
+                reverseGeocode(latitude, longitude);
+            },
+            error => {
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+        );
+    }
+
+
     useEffect(() => {
         setSelectedStateCode({
             code: userData?.stateCode,
@@ -45,10 +91,10 @@ const Profile = () => {
         setStates(indianStates.map(s => `${s.name} (${s.isoCode})`));
         const citiesList = City.getCitiesOfState('IN', userData?.stateCode ?? 'PB');
         setCities(citiesList.map(c => c.name));
+        // getUserLocation();
     }, [userData])
 
 
-    console.log("userData   ------------ ", profileImage)
     const openGallery = () => {
         try {
             ImageCropPicker.openPicker({
@@ -84,7 +130,6 @@ const Profile = () => {
         if (ref) {
             navigation.goBack();
         } else {
-            // ToastAndroid("something qent wrong")
         }
     }
 
@@ -172,11 +217,11 @@ const Profile = () => {
                 />
             </View>
 
-            <View style={{ width: width * 0.9, alignSelf: 'center', marginTop: hp(2), }}>
+            <View style={{ width: width * 0.9, alignSelf: 'center', marginTop: hp(2) }}>
                 <Text>Interest</Text>
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                    {selectedTags.map((item, index) => (
+                    {selectedTags?.map((item, index) => (
                         <RenderItemForSelectedProduct key={index} item={item} />
                     ))}
                 </View>

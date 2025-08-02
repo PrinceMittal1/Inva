@@ -9,7 +9,8 @@ const AppRoutes = {
     Compare : "Compare",
     SellerProfile : "SellerProfile",
     ChatListing : "ChatListing",
-    Chat : "Chat"
+    Chat : "Chat",
+    productDetail : "productDetail"
 }
 
 export default AppRoutes
