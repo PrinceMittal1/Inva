@@ -1,0 +1,269 @@
+import React, { useState } from "react"
+import { SafeAreaView, StyleSheet, View, TouchableOpacity, Text, Image, Dimensions, TextInput, Pressable, Platform, StatusBar, Alert } from "react-native"
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import auth from "@react-native-firebase/auth";
+import useFireStoreUtil from "../Functions/FireStoreUtils";
+import Images from "../Keys/Images";
+import { hp, wp } from "../Keys/dimension";
+import { useNavigation } from "@react-navigation/native";
+import AppRoutes from "../Routes/AppRoutes";
+import { useDispatch, useSelector } from "react-redux";
+import { setUserData, setUserId } from "../Redux/Reducers/userData";
+import { setLoader } from "../Redux/Reducers/tempData";
+import FireKeys from "../Functions/FireKeys";
+import firestore from "@react-native-firebase/firestore";
+import AppFonts from "../Functions/Fonts";
+import Colors from "../Keys/colors";
+import FastImage from "@d11/react-native-fast-image";
+
+const { width } = Dimensions.get('window');
+
+const Login = () => {
+    const [numberForLogin, setNumberForLogin] = useState("");
+    const navigation = useNavigation();
+    const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
+    const dispatch = useDispatch();
+    const [confirm, setConfirm] = useState<any>(null);
+    const [code, setCode] = useState('');
+    const loading = useSelector((state: any) => state.tempData.loader);
+    const { user_id } = useSelector((state: any) => state.userData);
+
+    GoogleSignin.configure({
+        webClientId: "505647175641-pt780qgtf1folf9e73nk9r17mrf5l1ib.apps.googleusercontent.com",
+    });
+
+    const signInWithPhoneNumber = async () => {
+        dispatch(setLoader(true));
+        if (!numberForLogin.trim() || numberForLogin.length != 10) {
+            Alert.alert("Add phone number of 10 digit")
+            dispatch(setLoader(false));
+            return
+        }
+        try {
+            const confirmation: any = await auth().signInWithPhoneNumber(`+91${numberForLogin}`);
+            navigation.navigate(AppRoutes?.VerificationScreen, {
+                confimration: confirmation,
+                phoneNumber : numberForLogin
+            })
+        } catch (error) {
+            console.log('Phone Sign-In Error:', error);
+        }
+        dispatch(setLoader(false));
+    };
+
+    async function onGoogleButtonPress() {
+        dispatch(setLoader(true));
+        try {
+            await GoogleSignin.signOut();
+            await auth().signOut();
+        } catch (error: any) { }
+
+        try {
+            const data: any = (await GoogleSignin.signIn()) || {};
+            if (data?.data) {
+                const googleCredential = auth?.GoogleAuthProvider.credential(data?.data?.idToken);
+                const res = await auth().signInWithCredential(googleCredential);
+                const additionalUserInfo: any = res.additionalUserInfo ?? {};
+
+                if (additionalUserInfo?.profile?.email) {
+                    const customerUserRef = firestore().collection(FireKeys.CustomerUser);
+                    const existingUserSnap = await customerUserRef.where('email', '==', additionalUserInfo?.profile?.email).limit(1).get();
+                    const existingDoc: any = existingUserSnap.docs[0];
+
+                    if (existingDoc?.id) {
+                        dispatch(setUserId(existingDoc?._data?.user_id));
+                        dispatch(setUserData({
+                            user_id: existingDoc?._data?.user_id,
+                            age: existingDoc?._data?.age,
+                            name: existingDoc?._data?.name,
+                            gender: existingDoc?._data?.gender,
+                            state: existingDoc?._data?.state,
+                            stateCode: existingDoc?._data?.stateCode,
+                            city: existingDoc?._data?.city
+                        }));
+                        navigation.replace(AppRoutes?.BottomBar);
+                    } else {
+                        const fireUtils = useFireStoreUtil();
+                        const user_id = await fireUtils.creatingCustomerUser(
+                            additionalUserInfo?.profile?.picture,
+                            additionalUserInfo?.profile?.name,
+                            additionalUserInfo?.profile?.email,
+                            ""
+                        );
+                        if (user_id) {
+                            dispatch(setUserId(user_id));
+                            navigation.navigate(AppRoutes?.ScreenForUserDetail);
+                        }
+                    }
+                }
+            }
+        } catch (error) { }
+        finally {
+            dispatch(setLoader(false));
+        }
+    }
+
+    return (
+        <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
+            <View style={styles.logoWrapper}>
+                <Image source={Images.logoForInva} style={styles.logo} resizeMode="contain" />
+            </View>
+
+            <View style={styles.welcomeWrapper}>
+                <Text style={styles.welcomeTitle}>Welcome to Inva</Text>
+                <Text style={styles.welcomeSubtitle}>Sign in to explore</Text>
+            </View>
+
+            <View style={styles.card}>
+                <Text style={styles.label}>Phone Number</Text>
+                <View style={styles.inputWrapper}>
+                    <TextInput
+                        value={numberForLogin}
+                        placeholder="Phone Number"
+                        placeholderTextColor={Colors?.DarkText}
+                        maxLength={10}
+                        style={styles.input}
+                        onChangeText={setNumberForLogin}
+                        onSubmitEditing={signInWithPhoneNumber}
+                        keyboardType="numeric"
+                    />
+                </View>
+
+                <Pressable onPress={signInWithPhoneNumber} style={styles.submitButton}>
+                    <Text style={styles.submitButtonText}>Submit</Text>
+                </Pressable>
+
+                <View style={styles.orCircle}>
+                    <Text>OR</Text>
+                </View>
+            </View>
+
+            <View style={styles.socialCard}>
+                <Pressable onPress={onGoogleButtonPress} style={styles.googleButton}>
+                    <FastImage source={Images?.googleLogo} style={styles.googleIcon} />
+                    <Text style={styles.googleButtonText}>Continue with Google</Text>
+                </Pressable>
+            </View>
+        </SafeAreaView>
+    );
+};
+
+export default Login;
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: Colors?.PrimaryBackground,
+    },
+    logoWrapper: {
+        alignSelf: 'center',
+        marginTop: wp(5),
+    },
+    logo: {
+        width: width / 2.5,
+        height: width / 2.5,
+    },
+    welcomeWrapper: {
+        alignSelf: 'center',
+    },
+    welcomeTitle: {
+        color: Colors?.AccentPink,
+        fontFamily: AppFonts.Bold,
+        fontSize: 28,
+        textAlign: 'center',
+    },
+    welcomeSubtitle: {
+        color: Colors?.AccentPink,
+        fontFamily: AppFonts.Regular,
+        fontSize: 20,
+        textAlign: 'center',
+    },
+    card: {
+        borderRadius: wp(5),
+        backgroundColor: '#FFFFFF',
+        width: wp(85),
+        alignSelf: 'center',
+        padding: wp(4),
+        paddingVertical: wp(7),
+        marginTop: hp(3),
+        position: 'relative',
+    },
+    label: {
+        fontFamily: AppFonts.Regular,
+        fontSize: 16,
+        lineHeight: 20,
+        marginLeft: wp(1),
+        color: Colors?.DarkText,
+    },
+    inputWrapper: {
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: Colors?.buttonPrimaryColor,
+        marginTop: hp(1),
+    },
+    input: {
+        borderRadius: 15,
+        height: 45,
+        fontSize: 16,
+        paddingLeft: 10,
+        color: Colors?.DarkText,
+    },
+    submitButton: {
+        borderWidth: 1,
+        borderColor: Colors?.buttonPrimaryColor,
+        marginTop: hp(2),
+        width: '100%',
+        alignSelf: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 15,
+        padding: 10,
+        backgroundColor: Colors?.buttonPrimaryColor,
+    },
+    submitButtonText: {
+        color: 'white',
+        fontFamily: AppFonts.SemiBold,
+        fontSize: 16,
+    },
+    orCircle: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignSelf: 'center',
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'absolute',
+        bottom: -20,
+    },
+    socialCard: {
+        borderRadius: wp(5),
+        backgroundColor: '#FFFFFF',
+        marginTop: hp(4),
+        width: wp(85),
+        alignSelf: 'center',
+        padding: wp(4),
+    },
+    googleButton: {
+        borderWidth: 1,
+        borderColor: Colors?.buttonPrimaryColor,
+        width: '100%',
+        alignSelf: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 8,
+        padding: 10,
+        backgroundColor: '#FFFFFF',
+        flexDirection: 'row',
+    },
+    googleIcon: {
+        width: 22,
+        height: 22,
+        marginRight: 20,
+    },
+    googleButtonText: {
+        color: Colors?.DarkText,
+        fontFamily: AppFonts.Regular,
+        fontSize: 18,
+    },
+});
