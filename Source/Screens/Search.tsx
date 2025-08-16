@@ -23,6 +23,7 @@ const Search = () => {
         state: false,
         id: ''
     })
+    const [loader, setLoader] = useState(false)
     const [searchText, setSearchText] = useState('')
     const [loading, setLoading] = useState<boolean>(false);
     const viewabilityConfig = useRef({
@@ -51,13 +52,14 @@ const Search = () => {
     });
 
     let fetchingProducts = async () => {
+        setLoader(true)
         try {
             const products = await getProductsForHome({ customerUserId: user_id });
-            // const fireUtils = useFireStoreUtil();
-            // let products = await fireUtils.gettingProductForHome(user_id)
             setAllProducts(products)
         } catch (error) {
             console.error('❌ Failed to fetch products:', error);
+        }finally{
+            setLoader(false)
         }
     }
 
@@ -119,6 +121,22 @@ const Search = () => {
 
 
     return (
+        <>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
+                </View>
+            )}
         <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', marginTop: (statusBarHeight + 0) }}>
             <Header title={'Search'}
                 showbackIcon={true}
@@ -163,6 +181,7 @@ const Search = () => {
             )}
 
         </SafeAreaView>
+        </>
     )
 }
 

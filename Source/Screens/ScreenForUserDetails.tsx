@@ -1,4 +1,4 @@
-import { Dimensions, Image, PermissionsAndroid, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, PermissionsAndroid, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import Header from "../Components/Header";
 import { hp, wp } from "../Keys/dimension";
 import Dropdown from "../Components/DropDown";
@@ -16,6 +16,7 @@ import ImageCropPicker from "react-native-image-crop-picker";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
 import Geolocation from "@react-native-community/geolocation";
+import { updatingUser } from "../Apis";
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,6 +36,7 @@ const ScreenForUserDetails = () => {
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState('');
     const navigation = useNavigation();
+    const [loader, setLoader] = useState(false)
     const ageOptions = Array.from({ length: 89 }, (_, i) => (i + 12).toString());
     const dispatch = useDispatch();
 
@@ -151,12 +153,24 @@ const ScreenForUserDetails = () => {
     };
 
     const ClickedOnContinue = async () => {
+        setLoader(true)
         const fireUtils = useFireStoreUtil();
         let profile_picture: any = '';
         if (profileImage?.path) {
             profile_picture = await fireUtils.uploadMediaToFirebase(profileImage?.path);
         }
-        const ref: any = await fireUtils.updatingCustomerUserDetail({
+        // const ref: any = await fireUtils.updatingCustomerUserDetail({
+        //     user_id: user_id,
+        //     age: Number(selected),
+        //     gender: selectedGender.toLocaleLowerCase(),
+        //     stateCode: selectedStateCode?.code,
+        //     state: selectedStateCode?.value,
+        //     city: selectedCity,
+        //     profile_picture: profile_picture,
+        //     interest: selectedTags
+        // });
+
+        const ref = await updatingUser({
             user_id: user_id,
             age: Number(selected),
             gender: selectedGender.toLocaleLowerCase(),
@@ -165,7 +179,7 @@ const ScreenForUserDetails = () => {
             city: selectedCity,
             profile_picture: profile_picture,
             interest: selectedTags
-        });
+        })
         if (ref) {
             navigation.reset({
                 index: 0,
@@ -173,6 +187,7 @@ const ScreenForUserDetails = () => {
             });
             updatingData(profile_picture);
         }
+        setLoader(false)
     };
 
     const removeItem = (itemToRemove: string) => {
@@ -195,6 +210,22 @@ const ScreenForUserDetails = () => {
     };
 
     return (
+        <>
+         {loader && (
+                        <View style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 999
+                        }}>
+                            <ActivityIndicator size="large" color="#fff" />
+                        </View>
+                    )}
         <SafeAreaView style={[styles.container, { marginTop: statusBarHeight }]}>
             <Header title={"Details"} />
 
@@ -273,6 +304,7 @@ const ScreenForUserDetails = () => {
                 />
             </ScrollView>
         </SafeAreaView>
+        </>
     );
 };
 

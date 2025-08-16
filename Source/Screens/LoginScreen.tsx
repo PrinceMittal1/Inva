@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { SafeAreaView, StyleSheet, View, TouchableOpacity, Text, Image, Dimensions, TextInput, Pressable, Platform, StatusBar, Alert } from "react-native"
+import { SafeAreaView, StyleSheet, View, TouchableOpacity, Text, Image, Dimensions, TextInput, Pressable, Platform, StatusBar, Alert, ActivityIndicator } from "react-native"
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from "@react-native-firebase/auth";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
@@ -9,7 +9,6 @@ import { useNavigation } from "@react-navigation/native";
 import AppRoutes from "../Routes/AppRoutes";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData, setUserId } from "../Redux/Reducers/userData";
-import { setLoader } from "../Redux/Reducers/tempData";
 import FireKeys from "../Functions/FireKeys";
 import firestore from "@react-native-firebase/firestore";
 import AppFonts from "../Functions/Fonts";
@@ -23,6 +22,7 @@ const Login = () => {
     const navigation = useNavigation();
     const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
     const dispatch = useDispatch();
+    const [loader, setLoader] = useState(false)
     const [confirm, setConfirm] = useState<any>(null);
     const [code, setCode] = useState('');
     const loading = useSelector((state: any) => state.tempData.loader);
@@ -33,26 +33,26 @@ const Login = () => {
     });
 
     const signInWithPhoneNumber = async () => {
-        dispatch(setLoader(true));
+        setLoader(true)
         if (!numberForLogin.trim() || numberForLogin.length != 10) {
             Alert.alert("Add phone number of 10 digit")
-            dispatch(setLoader(false));
+            setLoader(false)
             return
         }
         try {
             const confirmation: any = await auth().signInWithPhoneNumber(`+91${numberForLogin}`);
             navigation.navigate(AppRoutes?.VerificationScreen, {
                 confimration: confirmation,
-                phoneNumber : numberForLogin
+                phoneNumber: numberForLogin
             })
         } catch (error) {
             console.log('Phone Sign-In Error:', error);
         }
-        dispatch(setLoader(false));
+        setLoader(false)
     };
 
     async function onGoogleButtonPress() {
-        dispatch(setLoader(true));
+        setLoader(true)
         try {
             await GoogleSignin.signOut();
             await auth().signOut();
@@ -99,52 +99,69 @@ const Login = () => {
             }
         } catch (error) { }
         finally {
-            dispatch(setLoader(false));
+            setLoader(false)
         }
     }
 
     return (
-        <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
-            <View style={styles.logoWrapper}>
-                <Image source={Images.logoForInva} style={styles.logo} resizeMode="contain" />
-            </View>
-
-            <View style={styles.welcomeWrapper}>
-                <Text style={styles.welcomeTitle}>Welcome to Inva</Text>
-                <Text style={styles.welcomeSubtitle}>Sign in to explore</Text>
-            </View>
-
-            <View style={styles.card}>
-                <Text style={styles.label}>Phone Number</Text>
-                <View style={styles.inputWrapper}>
-                    <TextInput
-                        value={numberForLogin}
-                        placeholder="Phone Number"
-                        placeholderTextColor={Colors?.DarkText}
-                        maxLength={10}
-                        style={styles.input}
-                        onChangeText={setNumberForLogin}
-                        onSubmitEditing={signInWithPhoneNumber}
-                        keyboardType="numeric"
-                    />
+        <>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
+                </View>
+            )}
+            <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
+                <View style={styles.logoWrapper}>
+                    <Image source={Images.logoForInva} style={styles.logo} resizeMode="contain" />
                 </View>
 
-                <Pressable onPress={signInWithPhoneNumber} style={styles.submitButton}>
-                    <Text style={styles.submitButtonText}>Submit</Text>
-                </Pressable>
-
-                <View style={styles.orCircle}>
-                    <Text>OR</Text>
+                <View style={styles.welcomeWrapper}>
+                    <Text style={styles.welcomeTitle}>Welcome to Inva</Text>
+                    <Text style={styles.welcomeSubtitle}>Sign in to explore</Text>
                 </View>
-            </View>
 
-            <View style={styles.socialCard}>
-                <Pressable onPress={onGoogleButtonPress} style={styles.googleButton}>
-                    <FastImage source={Images?.googleLogo} style={styles.googleIcon} />
-                    <Text style={styles.googleButtonText}>Continue with Google</Text>
-                </Pressable>
-            </View>
-        </SafeAreaView>
+                <View style={styles.card}>
+                    <Text style={styles.label}>Phone Number</Text>
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            value={numberForLogin}
+                            placeholder="Phone Number"
+                            placeholderTextColor={Colors?.DarkText}
+                            maxLength={10}
+                            style={styles.input}
+                            onChangeText={setNumberForLogin}
+                            onSubmitEditing={signInWithPhoneNumber}
+                            keyboardType="numeric"
+                        />
+                    </View>
+
+                    <Pressable onPress={signInWithPhoneNumber} style={styles.submitButton}>
+                        <Text style={styles.submitButtonText}>Submit</Text>
+                    </Pressable>
+
+                    <View style={styles.orCircle}>
+                        <Text>OR</Text>
+                    </View>
+                </View>
+
+                <View style={styles.socialCard}>
+                    <Pressable onPress={onGoogleButtonPress} style={styles.googleButton}>
+                        <FastImage source={Images?.googleLogo} style={styles.googleIcon} />
+                        <Text style={styles.googleButtonText}>Continue with Google</Text>
+                    </Pressable>
+                </View>
+            </SafeAreaView>
+        </>
     );
 };
 

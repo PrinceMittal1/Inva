@@ -24,6 +24,7 @@ const Home = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const dispatch = useDispatch();
     const navigation = useNavigation();
+    const [loader, setLoader] = useState(false)
     const { user_id } = useSelector((state: any) => state.userData);
     const [visibleItems, setVisibleItems] = useState<{ [key: string]: number }>({});
     const viewabilityConfig = useRef({
@@ -37,7 +38,6 @@ const Home = () => {
     const visibleItemsTimers = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
     const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: any[] }) => {
-        // Clear timers for items that are no longer visible
         Object.keys(visibleItemsTimers.current).forEach(itemId => {
             if (!viewableItems.some(item => item.item.id === itemId)) {
                 clearTimeout(visibleItemsTimers.current[itemId]);
@@ -45,7 +45,6 @@ const Home = () => {
             }
         });
 
-        // Set timers for newly visible items
         viewableItems.forEach(({ item }) => {
             if (!visibleItemsTimers.current[item.id]) {
                 visibleItemsTimers.current[item.id] = setTimeout(() => {
@@ -72,13 +71,16 @@ const Home = () => {
     };
 
     let fetchingProducts = async () => {
+        const fireUtils = useFireStoreUtil();
+        setLoader(true)
         try {
             const products = await getProductsForHome({ customerUserId: user_id });
-            // const fireUtils = useFireStoreUtil();
-            // let products = await fireUtils.gettingProductForHome(user_id)
+            // const products = await fireUtils?.gettingProductForHome(user_id)
             setAllProducts(products)
         } catch (error) {
             console.error('❌ Failed to fetch products:', error);
+        } finally {
+            setLoader(false)
         }
     }
 
@@ -141,36 +143,53 @@ const Home = () => {
 
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', marginTop: (statusBarHeight + 0) }}>
-            <Header title={'Home'}
-                showbackIcon={false}
-                rightIcon={Images?.savedFilled}
-                rightClick={() => {
-                    navigation.navigate(AppRoutes.WishList)
-                }}
-            />
-
-            <FlatList
-                data={allProducts}
-                renderItem={RenderItem}
-                keyExtractor={(item) => `${item.id}-${item.follow}-${item.saved}`}
-                onViewableItemsChanged={onViewableItemsChanged.current}
-                viewabilityConfig={viewabilityConfig.current}
-                ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
-            />
-
-            {showComment?.state && (
-                <CommentModal
-                    productId={showComment?.id}
-                    visible={showComment?.state}
-                    onCrossPress={() => setShowComment({
-                        state: false,
-                        id: ''
-                    })}
-                />
+        <>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
+                </View>
             )}
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', marginTop: (statusBarHeight + 0) }}>
+                <Header title={'Home'}
+                    showbackIcon={false}
+                    rightIcon={Images?.savedFilled}
+                    rightClick={() => {
+                        navigation.navigate(AppRoutes.WishList)
+                    }}
+                />
 
-        </SafeAreaView>
+                <FlatList
+                    data={allProducts}
+                    renderItem={RenderItem}
+                    keyExtractor={(item) => `${item.id}-${item.follow}-${item.saved}`}
+                    onViewableItemsChanged={onViewableItemsChanged.current}
+                    viewabilityConfig={viewabilityConfig.current}
+                    ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
+                />
+
+                {showComment?.state && (
+                    <CommentModal
+                        productId={showComment?.id}
+                        visible={showComment?.state}
+                        onCrossPress={() => setShowComment({
+                            state: false,
+                            id: ''
+                        })}
+                    />
+                )}
+
+            </SafeAreaView>
+        </>
     )
 }
 export default Home

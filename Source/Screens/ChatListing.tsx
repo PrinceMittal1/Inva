@@ -8,7 +8,8 @@ import {
     Text,
     TouchableWithoutFeedback,
     View,
-    StyleSheet
+    StyleSheet,
+    ActivityIndicator
 } from "react-native";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import { useSelector } from "react-redux";
@@ -25,13 +26,16 @@ const ChatListing = () => {
     const { user_id } = useSelector((state: any) => state.userData);
     const focus = useIsFocused();
     const navigation = useNavigation();
+    const [loader, setLoader] = useState(false)
     const insets = useSafeAreaInsets();
 
     const gettingAllChats = async () => {
+        setLoader(true)
         const result = await fireUtils?.gettingAllChats(user_id);
         if (result) {
             setAllChats(result);
         }
+        setLoader(false)
     };
 
     useEffect(() => {
@@ -71,6 +75,22 @@ const ChatListing = () => {
     };
 
     return (
+        <>
+                    {loader && (
+                        <View style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 999
+                        }}>
+                            <ActivityIndicator size="large" color="#fff" />
+                        </View>
+                    )}
         <SafeAreaView style={styles.safeArea}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -90,6 +110,7 @@ const ChatListing = () => {
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
         </SafeAreaView>
+        </>
     );
 };
 

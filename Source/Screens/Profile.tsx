@@ -8,7 +8,8 @@ import {
     Text,
     View,
     PermissionsAndroid,
-    StyleSheet
+    StyleSheet,
+    ActivityIndicator
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Dropdown from "../Components/DropDown";
@@ -27,6 +28,7 @@ import { setUserData, setUserId } from "../Redux/Reducers/userData";
 import Geolocation from "@react-native-community/geolocation";
 import AppFonts from "../Functions/Fonts";
 import Colors from "../Keys/colors";
+import { updatingUser } from "../Apis";
 
 const { width, height } = Dimensions.get("window");
 
@@ -41,6 +43,7 @@ const Profile = () => {
         code: "PB",
         value: "Punjab"
     });
+    const [loader, setLoader] = useState(false)
     const [selectedTags, setSelectedTags] = useState([]);
     const { user_id, userData } = useSelector((state: any) => state.userData);
 
@@ -87,6 +90,7 @@ const Profile = () => {
     }
 
     useEffect(() => {
+        setLoader(true)
         setSelectedStateCode({
             code: userData?.stateCode,
             value: userData?.state
@@ -99,6 +103,7 @@ const Profile = () => {
         const citiesList = City.getCitiesOfState("IN", userData?.stateCode ?? "PB");
         setCities(citiesList.map(c => c.name));
         getUserLocation();
+        setLoader(false)
     }, [userData]);
 
     const openGallery = () => {
@@ -123,7 +128,18 @@ const Profile = () => {
         if (profileImage?.path) {
             profile_picture = await fireUtils.uploadMediaToFirebase(profileImage?.path);
         }
-        const ref: any = await fireUtils.updatingCustomerUserDetail({
+        // const ref: any = await fireUtils.updatingCustomerUserDetail({
+        //     user_id: user_id,
+        //     age: null,
+        //     gender: null,
+        //     stateCode: selectedStateCode?.code,
+        //     state: selectedStateCode?.value,
+        //     city: selectedCity,
+        //     profile_picture: profile_picture,
+        //     interest: selectedTags
+        // });
+
+        const ref = await updatingUser({
             user_id: user_id,
             age: null,
             gender: null,
@@ -132,7 +148,9 @@ const Profile = () => {
             city: selectedCity,
             profile_picture: profile_picture,
             interest: selectedTags
-        });
+        })
+
+
         if (ref) {
             dispatch(setUserData({
                 ...userData,
@@ -182,72 +200,89 @@ const Profile = () => {
     };
 
     return (
-        <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
-            <Header title={"Profile"} rightIcon={Images?.logout} rightClick={loggingOut} />
-
-            <View style={styles.profileImageWrapper}>
-                <FastImage
-                    style={styles.profileImage}
-                    source={
-                        profileImage && !profileImage?.path
-                            ? { uri: profileImage }
-                            : !profileImage && !profileImage?.path
-                                ? Images?.person
-                                : { uri: profileImage.path }
-                    }
-                />
-                <Pressable onPress={openGallery}>
-                    <FastImage
-                        source={Images?.EditForProductBlock}
-                        style={styles.editIcon}
-                        resizeMode="contain"
-                    />
-                </Pressable>
-            </View>
-
-            <View style={[styles.dropdownWrapper, { marginTop: hp(3) }]}>
-                <Text style={styles.inputLabel}>Select Your state</Text>
-                <Dropdown
-                    options={states}
-                    selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ""}
-                    onValueChange={handleStateChange}
-                />
-            </View>
-
-            <View style={[styles.dropdownWrapper]}>
-                <Text style={styles.inputLabel}>Select Your City</Text>
-                <Dropdown
-                    label="Select City"
-                    options={cities}
-                    selectedValue={selectedCity}
-                    onValueChange={setSelectedCity}
-                />
-            </View>
-
-            <View style={styles.dropdownWrapper}>
-                <Text style={styles.inputLabel}>Interest</Text>
-                <View style={styles.tagsContainer}>
-                    {selectedTags?.map((item, index) => (
-                        <RenderItemForSelectedProduct key={index} item={item} />
-                    ))}
+        <>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
                 </View>
-                <Dropdown
-                    options={["Saree", "Suits", "Toy gun", "Crockery", "Pants", "Shirts"]}
-                    selectedValue={""}
-                    barBorderColor={{ borderColor: "black", paddingVertical: 10 }}
-                    alreadySelectedOptions={selectedTags}
-                    onValueChange={item => {
-                        if (!selectedTags.includes(item)) {
-                            setSelectedTags([...selectedTags, item]);
+            )}
+            <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
+                <Header title={"Profile"} rightIcon={Images?.logout} rightClick={loggingOut} />
+
+                <View style={styles.profileImageWrapper}>
+                    <FastImage
+                        style={styles.profileImage}
+                        source={
+                            profileImage && !profileImage?.path
+                                ? { uri: profileImage }
+                                : !profileImage && !profileImage?.path
+                                    ? Images?.person
+                                    : { uri: profileImage.path }
                         }
-                    }}
-                />
-            </View>
+                    />
+                    <Pressable onPress={openGallery}>
+                        <FastImage
+                            source={Images?.EditForProductBlock}
+                            style={styles.editIcon}
+                            resizeMode="contain"
+                        />
+                    </Pressable>
+                </View>
 
-            <View style={styles.flexSpacer} />
+                <View style={[styles.dropdownWrapper, { marginTop: hp(3) }]}>
+                    <Text style={styles.inputLabel}>Select Your state</Text>
+                    <Dropdown
+                        options={states}
+                        selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ""}
+                        onValueChange={handleStateChange}
+                    />
+                </View>
 
-            <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} />
-        </SafeAreaView>
+                <View style={[styles.dropdownWrapper]}>
+                    <Text style={styles.inputLabel}>Select Your City</Text>
+                    <Dropdown
+                        label="Select City"
+                        options={cities}
+                        selectedValue={selectedCity}
+                        onValueChange={setSelectedCity}
+                    />
+                </View>
+
+                <View style={styles.dropdownWrapper}>
+                    <Text style={styles.inputLabel}>Interest</Text>
+                    <View style={styles.tagsContainer}>
+                        {selectedTags?.map((item, index) => (
+                            <RenderItemForSelectedProduct key={index} item={item} />
+                        ))}
+                    </View>
+                    <Dropdown
+                        options={["Saree", "Suits", "Toy gun", "Crockery", "Pants", "Shirts"]}
+                        selectedValue={""}
+                        barBorderColor={{ borderColor: "black", paddingVertical: 10 }}
+                        alreadySelectedOptions={selectedTags}
+                        onValueChange={item => {
+                            if (!selectedTags.includes(item)) {
+                                setSelectedTags([...selectedTags, item]);
+                            }
+                        }}
+                    />
+                </View>
+
+                <View style={styles.flexSpacer} />
+
+                <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} />
+            </SafeAreaView>
+        </>
     );
 };
 

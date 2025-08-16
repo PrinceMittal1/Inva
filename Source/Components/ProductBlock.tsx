@@ -23,6 +23,7 @@ import Images from "../Keys/Images";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
+import { toggleLike } from "../Apis";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -56,9 +57,7 @@ const ProductBlock = ({
 
     const toggleFollowInSubcollections = async () => {
         const fireUtils = useFireStoreUtil();
-                console.log("Results ------------- ", blockItem?.user_id, user_id)
         const result = await fireUtils?.toggleFollowInSubcollection(blockItem?.user_id, user_id);
- console.log("Results ------------- ------0000 ", result)
         statusChangingForFollow(blockItem?.user_id, !!result);
     };
 
@@ -82,8 +81,10 @@ const ProductBlock = ({
                 isLiked: result.state,
                 likeCount: result.likeCount
             }));
+            await toggleLike(blockItem?.id, user_id, blockItem?.title, blockItem?.productType, blockItem?.selectedTags, blockItem?.businessUser?.name)
         }
     };
+
 
     return (
         <View style={styles.mainView}>
@@ -224,7 +225,7 @@ const useStyles = () =>
         mainView: {
             width: screenWidth * 0.95,
             alignSelf: "center",
-            backgroundColor:'#FFFFFF',
+            backgroundColor: '#FFFFFF',
             padding: 10,
             marginTop: 10,
             borderWidth: 1,

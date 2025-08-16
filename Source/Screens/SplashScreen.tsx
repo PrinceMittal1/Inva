@@ -15,11 +15,11 @@ const Splash = () => {
 
     useEffect(() => {
         if (user_id && userData?.age && userData?.gender) {
-            navigation.navigate(AppRoutes.BottomBar)
+            navigation.replace(AppRoutes.BottomBar)
         } else if (user_id) {
-            navigation.navigate(AppRoutes?.ScreenForUserDetail)
+            navigation.replace(AppRoutes?.ScreenForUserDetail)
         } else {
-            navigation.navigate(AppRoutes?.Login)
+            navigation.replace(AppRoutes?.Login)
         }
         //  navigation.navigate(AppRoutes?.ScreenForUserDetail)
     }, [user_id])

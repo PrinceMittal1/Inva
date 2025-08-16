@@ -136,18 +136,21 @@ export default function useFireStoreUtil() {
     const gettingProductForHome = async (customerUserId: any) => {
         const productsSnapshot = await firestore()
             .collection(FireKeys?.Products)
+            .limit(5)
             .get();
 
+        console.log("gettingProductForHome------------ 1", new Date())
         const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         const enrichedProducts = await Promise.all(
             products.map(async (product: any) => {
+                console.log("gettingProductForHome------------ 2", new Date())
                 try {
                     const userDoc = await firestore()
                         .collection(FireKeys.BusinessUser)
                         .doc(product.user_id)
                         .get();
-                    const userData = userDoc.exists ? userDoc.data() : {};
+                    const userData = userDoc.exists() ? userDoc.data() : {};
                     const userFollowState = await firestore().collection(FireKeys.Follower).doc(product.user_id).collection('List').doc(customerUserId).get();
                     const userLikedState = await firestore().collection(FireKeys.Likes).doc(product?.id).collection('List').doc(customerUserId).get();
                     const userSavedState = await firestore().collection(FireKeys?.WishList).doc(customerUserId).collection("List").doc(product.id).get();
@@ -156,13 +159,13 @@ export default function useFireStoreUtil() {
                     let isLiked = false;
                     let saved = false
 
-                    if (userFollowState.exists) {
+                    if (userFollowState.exists()) {
                         isFollowing = true
                     }
-                    if (userLikedState.exists) {
+                    if (userLikedState.exists()) {
                         isLiked = true;
                     }
-                    if (userSavedState.exists) {
+                    if (userSavedState.exists()) {
                         saved = true
                     }
 
@@ -189,7 +192,6 @@ export default function useFireStoreUtil() {
                 }
             })
         );
-
         return enrichedProducts;
     };
 
@@ -723,15 +725,27 @@ export default function useFireStoreUtil() {
         return finalList;
     };
 
-    const getProduct = async (id: string) => {
+    const getProduct = async (id: string, customerUserId: string) => {
         if (!id) return {};
         try {
             const productSnap = await firestore()
-                .collection(FireKeys?.Products) // FireKeys.Products should be your 'products' collection key
+                .collection(FireKeys?.Products)
                 .doc(id)
                 .get();
 
-            const productData = productSnap.exists ? productSnap.data() : null;
+            const productData = productSnap.exists() ? productSnap.data() : null;
+            const userLikedState = await firestore().collection(FireKeys.Likes).doc(id).collection('List').doc(customerUserId).get();
+            const userSavedState = await firestore().collection(FireKeys?.WishList).doc(customerUserId).collection("List").doc(id).get();
+
+            let isLiked = false;
+            let saved = false
+
+            if (userLikedState.exists()) {
+                isLiked = true;
+            }
+            if (userSavedState.exists()) {
+                saved = true
+            }
 
             if (!productData) {
                 console.warn("No product found with ID:", id);
@@ -739,7 +753,11 @@ export default function useFireStoreUtil() {
                 console.log("Fetched product:", productData);
             }
 
-            return productData;
+            return {
+                ...productData,
+                isLiked: isLiked,
+                saved: saved
+            };
         } catch (error) {
             console.error("Error fetching product:", error);
             return null;

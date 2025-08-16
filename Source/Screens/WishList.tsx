@@ -17,16 +17,20 @@ const WishList = () => {
     const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
     const [loading, setLoading] = useState<boolean>(false);
     const navigation = useNavigation();
+    const [loader, setLoader] = useState(false)
     const [showComment, setShowComment] = useState({
-        state : false,
-        id : ''
+        state: false,
+        id: ''
     })
 
     const fetchingWishListProduct = async () => {
+        setLoader(true)
         try {
             const products = await getProductsForWishlistPage({ customerUserId: user_id });
             setAllProducts(products)
         } catch (e) {
+        } finally {
+            setLoader(false)
         }
     }
 
@@ -99,10 +103,10 @@ const WishList = () => {
                 onSharePress={() => { }}
                 onSavePress={savingItemInWishlist}
                 onComparisonPress={() => { }}
-                onCommentPress={()=>{
+                onCommentPress={() => {
                     setShowComment({
-                        state :true,
-                        id : item?.id
+                        state: true,
+                        id: item?.id
                     })
                 }}
             />
@@ -111,27 +115,45 @@ const WishList = () => {
 
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(233, 174, 160, 0.1)", marginTop: (statusBarHeight + 0) }}>
-            <Header title={'Saved Product'}/>
-            <FlatList
-                data={allProducts}
-                renderItem={RenderItem}
-                keyExtractor={(item) => `${item.id}-${item.follow}-${item.saved}`}
-                onViewableItemsChanged={onViewableItemsChanged.current}
-                viewabilityConfig={viewabilityConfig.current}
-                ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
-            />
-            {showComment?.state && (
-                          <CommentModal
-                            productId={showComment?.id}
-                            visible={showComment?.state}
-                            onCrossPress={() => setShowComment({
-                                state : false,
-                                id : ''
-                            })}
-                          />
-                        )}
-        </SafeAreaView>
+        <>
+            {loader
+                && (
+                    <View style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.3)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 999
+                    }}>
+                        <ActivityIndicator size="large" color="#fff" />
+                    </View>
+                )}
+            <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(233, 174, 160, 0.1)", marginTop: (statusBarHeight + 0) }}>
+                <Header title={'Saved Product'} />
+                <FlatList
+                    data={allProducts}
+                    renderItem={RenderItem}
+                    keyExtractor={(item) => `${item.id}-${item.follow}-${item.saved}`}
+                    onViewableItemsChanged={onViewableItemsChanged.current}
+                    viewabilityConfig={viewabilityConfig.current}
+                    ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
+                />
+                {showComment?.state && (
+                    <CommentModal
+                        productId={showComment?.id}
+                        visible={showComment?.state}
+                        onCrossPress={() => setShowComment({
+                            state: false,
+                            id: ''
+                        })}
+                    />
+                )}
+            </SafeAreaView>
+        </>
     )
 }
 
