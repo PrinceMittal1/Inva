@@ -99,9 +99,10 @@ const CommentBlocks = ({ item, index, onCrossPress, onReplyPress, deletingCommen
       month: "short",
       year: "numeric",
     };
-    return date.toLocaleDateString("en-US", options); // e.g., Jul 05, 2025
+    return date.toLocaleDateString("en-US", options);
   };
 
+  console.log("all comments are", itemSaved)
   return (
     <>
       <View style={styles.mainView}>
@@ -115,7 +116,7 @@ const CommentBlocks = ({ item, index, onCrossPress, onReplyPress, deletingCommen
           />
         </Pressable>
         <View style={{ marginLeft: 10, width: "87%" }}>
-          <Text maxFontSizeMultiplier={1.5} style={styles.name}>{itemSaved?.name}</Text>
+          <Text maxFontSizeMultiplier={1.5} style={styles.name}>{itemSaved?.sellerName ? `${itemSaved?.sellerName}(Seller)` : itemSaved?.name ? `${itemSaved?.name}` : ''}</Text>
           <Text maxFontSizeMultiplier={1.2} style={styles.comment}>{itemSaved?.comment}</Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>

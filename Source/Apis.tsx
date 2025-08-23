@@ -136,3 +136,17 @@ export const toggleSaved = async (payload: any) => {
   }
 };
 
+
+export const followSeller = async (user_id: string, seller_id: string) => {
+  try {
+    const response = await axios.post(`${apiUrl}seller/follow`, {
+      user_id,
+      seller_id,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Follow API error:", error.response?.data || error.message);
+    throw error;
+  }
+};

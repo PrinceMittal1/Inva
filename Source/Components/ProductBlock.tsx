@@ -23,7 +23,7 @@ import Images from "../Keys/Images";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
-import { toggleLike, toggleSaved } from "../Apis";
+import { followSeller, toggleLike, toggleSaved } from "../Apis";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -62,15 +62,19 @@ const ProductBlock = ({
     };
 
     const toggleFollowInSubcollections = async () => {
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.toggleFollowInSubcollection(blockItem?.user_id, user_id);
-        statusChangingForFollow(blockItem?.user_id, !!result);
+        try {
+            const res = await followSeller(user_id, blockItem?.sellerId)
+
+        } catch (error) {
+            
+        }
     };
+
+    console.log(" cmn bn nvm =========== ", blockItem?.followed)
 
     const toggleSavingCollection = async () => {
         let product_id = blockItem?._id
         let res = await toggleSaved({ product_id, user_id })
-        console.log("res for saved ----- ", res?.data?.message)
         if(res?.status == 200){
             onSavePress(product_id, res?.data?.message == 'Product saved' ? true : false);
         }
@@ -94,7 +98,7 @@ const ProductBlock = ({
                         style={styles.sellerInfo}
                         onPress={() => {
                             navigation.navigate(AppRoutes?.SellerProfile, {
-                                seller_id: blockItem?.businessUser?.seller_id
+                                seller_id: blockItem?.sellerId
                             });
                         }}
                     >

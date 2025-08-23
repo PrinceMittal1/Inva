@@ -1,32 +1,27 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { SafeAreaView, StyleSheet, View, TouchableOpacity, Text, Image, Dimensions, TextInput, Pressable, Platform, StatusBar, Alert, ActivityIndicator } from "react-native"
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from "@react-native-firebase/auth";
-import useFireStoreUtil from "../Functions/FireStoreUtils";
 import Images from "../Keys/Images";
 import { hp, wp } from "../Keys/dimension";
 import { useNavigation } from "@react-navigation/native";
 import AppRoutes from "../Routes/AppRoutes";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData, setUserId } from "../Redux/Reducers/userData";
-import FireKeys from "../Functions/FireKeys";
-import firestore from "@react-native-firebase/firestore";
 import AppFonts from "../Functions/Fonts";
 import Colors from "../Keys/colors";
 import FastImage from "@d11/react-native-fast-image";
 import { creatingUserApi } from "../Apis";
+import { FirebaseApp, getApps, initializeApp } from "firebase/app"; 
 
 const { width } = Dimensions.get('window');
 
 const Login = () => {
     const [numberForLogin, setNumberForLogin] = useState("");
-    const navigation = useNavigation();
+    const navigation = useNavigation() as any;
     const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
     const dispatch = useDispatch();
     const [loader, setLoader] = useState(false)
-    const [confirm, setConfirm] = useState<any>(null);
-    const [code, setCode] = useState('');
-    const loading = useSelector((state: any) => state.tempData.loader);
     const { user_id } = useSelector((state: any) => state.userData);
 
     GoogleSignin.configure({
@@ -57,7 +52,8 @@ const Login = () => {
         try {
             await GoogleSignin.signOut();
             await auth().signOut();
-        } catch (error: any) { }
+        } catch (error: any) {
+        }
 
         try {
             const data: any = (await GoogleSignin.signIn()) || {};
@@ -78,7 +74,9 @@ const Login = () => {
                     }
                 }
             }
-        } catch (error) { }
+        } catch (error) {
+            // console.log("error while logging out is ------ ", error)
+        }
         finally {
             setLoader(false)
         }

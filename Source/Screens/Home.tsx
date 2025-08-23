@@ -16,13 +16,13 @@ import { getApp } from 'firebase/app';
 import { getProductsForHome } from "../Apis";
 import CommentModal from "../Components/Comments/CommentModal";
 import Colors from "../Keys/colors";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get('window')
 const Home = () => {
-    const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
     const [allProducts, setAllProducts] = useState<any>([])
     const [loading, setLoading] = useState<boolean>(false);
-    const dispatch = useDispatch();
+    const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const [loader, setLoader] = useState(false)
     const { user_id } = useSelector((state: any) => state.userData);
@@ -33,7 +33,7 @@ const Home = () => {
     });
     const [showComment, setShowComment] = useState({
         state: false,
-        id: ''
+        _id: ''
     })
     const visibleItemsTimers = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
@@ -71,7 +71,6 @@ const Home = () => {
     };
 
     let fetchingProducts = async () => {
-        const fireUtils = useFireStoreUtil();
         setLoader(true)
         try {
             const res = await getProductsForHome({ customerUserId: user_id });
@@ -117,7 +116,7 @@ const Home = () => {
                 onCommentPress={() => {
                     setShowComment({
                         state: true,
-                        id: item?.id
+                        _id: item?._id
                     })
                 }}
                 onComparisonPress={() => {
@@ -127,7 +126,6 @@ const Home = () => {
         )
     }
 
-        console.log("items count is ------", allProducts?.[0])
 
     return (
         <>
@@ -146,7 +144,7 @@ const Home = () => {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', marginTop: (statusBarHeight + 0) }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', paddingTop: insets.top, paddingBottom:insets.bottom }}>
                 <Header title={'Home'}
                     showbackIcon={false}
                     rightIcon={Images?.savedFilled}
@@ -166,7 +164,7 @@ const Home = () => {
 
                 {showComment?.state && (
                     <CommentModal
-                        productId={showComment?.id}
+                        productId={showComment?._id}
                         visible={showComment?.state}
                         onCrossPress={() => setShowComment({
                             state: false,

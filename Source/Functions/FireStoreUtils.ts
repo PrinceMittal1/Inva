@@ -556,7 +556,6 @@ export default function useFireStoreUtil() {
                 ...doc.data(),
             }));
 
-            console.log("✅ All comments: ------- in firebase", comments);
             return comments;
         } catch (error) {
             console.error("❌ Error getting comments:", error);
