@@ -128,17 +128,6 @@ const Profile = () => {
         if (profileImage?.path) {
             profile_picture = await fireUtils.uploadMediaToFirebase(profileImage?.path);
         }
-        // const ref: any = await fireUtils.updatingCustomerUserDetail({
-        //     user_id: user_id,
-        //     age: null,
-        //     gender: null,
-        //     stateCode: selectedStateCode?.code,
-        //     state: selectedStateCode?.value,
-        //     city: selectedCity,
-        //     profile_picture: profile_picture,
-        //     interest: selectedTags
-        // });
-
         const ref = await updatingUser({
             user_id: user_id,
             age: null,

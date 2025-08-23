@@ -1,4 +1,4 @@
-const AppRoutes = {
+const AppRoutes : any = {
     Login: "Login",
     Splash: "Splash",
     ScreenForUserDetail: "ScreenForUserDetail",

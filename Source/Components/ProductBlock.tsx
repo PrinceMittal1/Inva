@@ -23,7 +23,7 @@ import Images from "../Keys/Images";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
-import { toggleLike } from "../Apis";
+import { toggleLike, toggleSaved } from "../Apis";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -50,9 +50,15 @@ const ProductBlock = ({
     };
 
     const formatingDate = (timestamp: any) => {
-        const date = new Date(timestamp * 1000);
-        const options: any = { day: '2-digit', month: 'short', year: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
+        const date = new Date(timestamp);
+
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "2-digit",
+            })
+            .replace(/\//g, "-");
     };
 
     const toggleFollowInSubcollections = async () => {
@@ -62,29 +68,23 @@ const ProductBlock = ({
     };
 
     const toggleSavingCollection = async () => {
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.toggleSavingInWishlist(user_id, blockItem?.id);
-        onSavePress(blockItem?.id, !!result);
+        let product_id = blockItem?._id
+        let res = await toggleSaved({ product_id, user_id })
+        console.log("res for saved ----- ", res?.data?.message)
+        if(res?.status == 200){
+            onSavePress(product_id, res?.data?.message == 'Product saved' ? true : false);
+        }
     };
 
     const LikingProduct = async () => {
         setBlockItem(prev => ({
             ...prev,
-            isLiked: !prev.isLiked,
-            likeCount: prev.isLiked ? prev.likeCount - 1 : prev.likeCount + 1
+            liked_me: !prev.liked_me,
+            likeCount: prev.liked_me ? prev.likeCount - 1 : prev.likeCount + 1
         }));
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.likingCard(blockItem?.id, user_id);
-        if (result) {
-            setBlockItem(prev => ({
-                ...prev,
-                isLiked: result.state,
-                likeCount: result.likeCount
-            }));
-            await toggleLike(blockItem?.id, user_id, blockItem?.title, blockItem?.productType, blockItem?.selectedTags, blockItem?.businessUser?.name)
-        }
+        let product_id = blockItem?._id
+        await toggleLike({ product_id, user_id })
     };
-
 
     return (
         <View style={styles.mainView}>
@@ -103,7 +103,7 @@ const ProductBlock = ({
                             style={styles.sellerImage}
                             resizeMode="contain"
                         />
-                        <Text style={styles.sellerName}>{blockItem?.businessUser?.name}</Text>
+                        <Text style={styles.sellerName}>{blockItem?.sellerName}</Text>
                     </Pressable>
                 }
 
@@ -186,7 +186,7 @@ const ProductBlock = ({
 
                     <Pressable onPress={LikingProduct} style={styles.bottomIconMargin}>
                         <Image
-                            source={blockItem?.isLiked ? Images.filledHeart : Images.Heart}
+                            source={blockItem?.liked_me ? Images.filledHeart : Images.Heart}
                             style={styles.bottomIcon}
                             resizeMode="contain"
                         />

@@ -548,7 +548,7 @@ export default function useFireStoreUtil() {
                 .collection(FireKeys.Comment)
                 .doc(productId)
                 .collection("List")
-                .orderBy("createdAt", "desc") // optional: latest first
+                .orderBy("createdAt", "desc")
                 .get();
 
             const comments = response.docs.map((doc) => ({

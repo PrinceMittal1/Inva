@@ -1,4 +1,4 @@
-import { ActivityIndicator, Dimensions, Image, PermissionsAndroid, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, PermissionsAndroid, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import Header from "../Components/Header";
 import { hp, wp } from "../Keys/dimension";
 import Dropdown from "../Components/DropDown";
@@ -16,7 +16,7 @@ import ImageCropPicker from "react-native-image-crop-picker";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
 import Geolocation from "@react-native-community/geolocation";
-import { updatingUser } from "../Apis";
+import { updatingUser, updatingUserApi } from "../Apis";
 
 const { width, height } = Dimensions.get('window');
 
@@ -151,7 +151,6 @@ const ScreenForUserDetails = () => {
             console.log("Error opening picker", error);
         }
     };
-
     const ClickedOnContinue = async () => {
         setLoader(true)
         const fireUtils = useFireStoreUtil();
@@ -159,19 +158,8 @@ const ScreenForUserDetails = () => {
         if (profileImage?.path) {
             profile_picture = await fireUtils.uploadMediaToFirebase(profileImage?.path);
         }
-        // const ref: any = await fireUtils.updatingCustomerUserDetail({
-        //     user_id: user_id,
-        //     age: Number(selected),
-        //     gender: selectedGender.toLocaleLowerCase(),
-        //     stateCode: selectedStateCode?.code,
-        //     state: selectedStateCode?.value,
-        //     city: selectedCity,
-        //     profile_picture: profile_picture,
-        //     interest: selectedTags
-        // });
-
-        const ref = await updatingUser({
-            user_id: user_id,
+        const ref = await updatingUserApi({
+            _id: user_id,
             age: Number(selected),
             gender: selectedGender.toLocaleLowerCase(),
             stateCode: selectedStateCode?.code,
@@ -180,7 +168,7 @@ const ScreenForUserDetails = () => {
             profile_picture: profile_picture,
             interest: selectedTags
         })
-        if (ref) {
+        if (ref?.status == 200) {
             navigation.reset({
                 index: 0,
                 routes: [{ name: AppRoutes?.BottomBar }],
@@ -211,99 +199,112 @@ const ScreenForUserDetails = () => {
 
     return (
         <>
-         {loader && (
-                        <View style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: 'rgba(0,0,0,0.3)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            zIndex: 999
-                        }}>
-                            <ActivityIndicator size="large" color="#fff" />
-                        </View>
-                    )}
-        <SafeAreaView style={[styles.container, { marginTop: statusBarHeight }]}>
-            <Header title={"Details"} />
-
-            <ScrollView style={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
-                <View style={styles.profileImageContainer}>
-                    <FastImage
-                        style={styles.profileImage}
-                        source={(!profileImage && !profileImage?.path) ? Images?.person : { uri: profileImage.path }}
-                    />
-                    <Pressable onPress={openGallery}>
-                        <FastImage source={Images?.EditForProductBlock} style={styles.editIcon} resizeMode="contain" />
-                    </Pressable>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
                 </View>
+            )}
+            <SafeAreaView style={[styles.container, { marginTop: statusBarHeight }]}>
+                <Header title={"Details"} />
 
-                <View style={[styles.inputContainer, { marginTop: hp(3) }]}>
-                    <Text style={styles.inputLabel}>Select Your Age</Text>
-                    <Dropdown
-                        options={ageOptions}
-                        selectedValue={selected}
-                        onValueChange={setSelected}
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Interest</Text>
-                    <View style={styles.tagsContainer}>
-                        {selectedTags.map((item, index) => (
-                            <RenderItemForSelectedProduct key={index} item={item} />
-                        ))}
+                <ScrollView style={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
+                    <View style={styles.profileImageContainer}>
+                        <FastImage
+                            style={styles.profileImage}
+                            source={(!profileImage && !profileImage?.path) ? Images?.person : { uri: profileImage.path }}
+                        />
+                        <Pressable onPress={openGallery}>
+                            <FastImage source={Images?.EditForProductBlock} style={styles.editIcon} resizeMode="contain" />
+                        </Pressable>
                     </View>
-                    <Dropdown
-                        options={['Saree', 'Suits', 'Toy gun', 'Crockery', 'Pants', 'Shirts']}
-                        selectedValue={''}
-                        barBorderColor={{ borderColor: 'black', paddingVertical: 10 }}
-                        alreadySelectedOptions={selectedTags}
-                        onValueChange={(item) => {
-                            if (!selectedTags.includes(item)) {
-                                setSelectedTags([...selectedTags, item]);
-                            }
-                        }}
-                    />
-                </View>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Choose your gender</Text>
-                    <Dropdown
-                        options={['Female', 'Male']}
-                        selectedValue={selectedGender}
-                        onValueChange={setSelectedGender}
-                    />
-                </View>
+                    <View style={[styles.inputContainer, { marginTop: hp(3) }]}>
+                        <Text style={styles.inputLabel}>Name</Text>
+                        <View style={styles?.dropdown}>
+                            <TextInput
+                                value={name}
+                                style={{fontFamily: AppFonts.Regular, fontSize: 16}}
+                                placeholder="name"
+                                placeholderTextColor={Colors?.DarkText}
+                                onChangeText={setName} 
+                                />
+                        </View>
+                    </View>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Select Your state</Text>
-                    <Dropdown
-                        options={states}
-                        selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ''}
-                        onValueChange={handleStateChange}
-                    />
-                </View>
+                    <View style={[styles.inputContainer, { marginTop: hp(3) }]}>
+                        <Text style={styles.inputLabel}>Select Your Age</Text>
+                        <Dropdown
+                            options={ageOptions}
+                            selectedValue={selected}
+                            onValueChange={setSelected}
+                        />
+                    </View>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Select Your City</Text>
-                    <Dropdown
-                        label="Select City"
-                        options={cities}
-                        selectedValue={selectedCity}
-                        onValueChange={setSelectedCity}
-                    />
-                </View>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Interest</Text>
+                        <View style={styles.tagsContainer}>
+                            {selectedTags.map((item, index) => (
+                                <RenderItemForSelectedProduct key={index} item={item} />
+                            ))}
+                        </View>
+                        <Dropdown
+                            options={['Saree', 'Suits', 'Toy gun', 'Crockery', 'Pants', 'Shirts']}
+                            selectedValue={''}
+                            barBorderColor={{ borderColor: 'black', paddingVertical: 10 }}
+                            alreadySelectedOptions={selectedTags}
+                            onValueChange={(item) => {
+                                if (!selectedTags.includes(item)) {
+                                    setSelectedTags([...selectedTags, item]);
+                                }
+                            }}
+                        />
+                    </View>
 
-                <BottomButton
-                    btnStyle={styles.bottomButton}
-                    title={'Continue'}
-                    clickable={ClickedOnContinue}
-                />
-            </ScrollView>
-        </SafeAreaView>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Choose your gender</Text>
+                        <Dropdown
+                            options={['Female', 'Male']}
+                            selectedValue={selectedGender}
+                            onValueChange={setSelectedGender}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Select Your state</Text>
+                        <Dropdown
+                            options={states}
+                            selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ''}
+                            onValueChange={handleStateChange}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Select Your City</Text>
+                        <Dropdown
+                            label="Select City"
+                            options={cities}
+                            selectedValue={selectedCity}
+                            onValueChange={setSelectedCity}
+                        />
+                    </View>
+
+                    <BottomButton
+                        btnStyle={styles.bottomButton}
+                        title={'Continue'}
+                        clickable={ClickedOnContinue}
+                    />
+                </ScrollView>
+            </SafeAreaView>
         </>
     );
 };
@@ -314,6 +315,12 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors?.PrimaryBackground,
+    },
+    dropdown: {
+        padding: 12,
+        borderWidth: 1,
+        borderColor: Colors?.buttonPrimaryColor,
+        borderRadius: 8,
     },
     scrollContainer: {
         flex: 1

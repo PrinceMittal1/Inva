@@ -3,7 +3,7 @@ import { ActivityIndicator, Dimensions, FlatList, Platform, Pressable, SafeAreaV
 import Header from "../Components/Header"
 import ImagePickerModal from "../Components/ImagePickerModal"
 import storage from '@react-native-firebase/storage';
-import RNFS from 'react-native-fs';
+import RNFS, { stat } from 'react-native-fs';
 import { useDispatch, useSelector } from "react-redux";
 import { setUserId } from "../Redux/Reducers/userData";
 import { useNavigation } from "@react-navigation/native";
@@ -74,9 +74,8 @@ const Home = () => {
         const fireUtils = useFireStoreUtil();
         setLoader(true)
         try {
-            const products = await getProductsForHome({ customerUserId: user_id });
-            // const products = await fireUtils?.gettingProductForHome(user_id)
-            setAllProducts(products)
+            const res = await getProductsForHome({ customerUserId: user_id });
+            setAllProducts(res?.data?.products)
         } catch (error) {
             console.error('❌ Failed to fetch products:', error);
         } finally {
@@ -89,12 +88,9 @@ const Home = () => {
     }, [])
 
     const statusChangingForFollow = (id: any, state: boolean) => {
-
-        console.log("statusChangingForFollow ---------- ", id, state)
-
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product.user_id === id
+                product._id === id
                     ? { ...product, follow: state }
                     : product
             )
@@ -104,18 +100,8 @@ const Home = () => {
     const savingItemInWishlist = (id: any, state: boolean) => {
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product.id === id
+                product._id === id
                     ? { ...product, saved: state }
-                    : product
-            )
-        );
-    }
-
-    const savingItemToCompare = (id: any, state: boolean) => {
-        setAllProducts(prevProducts =>
-            prevProducts.map(product =>
-                product.id === id
-                    ? { ...product, comparedAdded: state }
                     : product
             )
         );
@@ -141,6 +127,7 @@ const Home = () => {
         )
     }
 
+        console.log("items count is ------", allProducts?.[0])
 
     return (
         <>
@@ -171,7 +158,7 @@ const Home = () => {
                 <FlatList
                     data={allProducts}
                     renderItem={RenderItem}
-                    keyExtractor={(item) => `${item.id}-${item.follow}-${item.saved}`}
+                    keyExtractor={(item, index) => `${index}-${item?.saved}`}
                     onViewableItemsChanged={onViewableItemsChanged.current}
                     viewabilityConfig={viewabilityConfig.current}
                     ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}

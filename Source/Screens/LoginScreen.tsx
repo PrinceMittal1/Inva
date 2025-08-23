@@ -14,6 +14,7 @@ import firestore from "@react-native-firebase/firestore";
 import AppFonts from "../Functions/Fonts";
 import Colors from "../Keys/colors";
 import FastImage from "@d11/react-native-fast-image";
+import { creatingUserApi } from "../Apis";
 
 const { width } = Dimensions.get('window');
 
@@ -64,36 +65,16 @@ const Login = () => {
                 const googleCredential = auth?.GoogleAuthProvider.credential(data?.data?.idToken);
                 const res = await auth().signInWithCredential(googleCredential);
                 const additionalUserInfo: any = res.additionalUserInfo ?? {};
-
                 if (additionalUserInfo?.profile?.email) {
-                    const customerUserRef = firestore().collection(FireKeys.CustomerUser);
-                    const existingUserSnap = await customerUserRef.where('email', '==', additionalUserInfo?.profile?.email).limit(1).get();
-                    const existingDoc: any = existingUserSnap.docs[0];
-
-                    if (existingDoc?.id) {
-                        dispatch(setUserId(existingDoc?._data?.user_id));
-                        dispatch(setUserData({
-                            user_id: existingDoc?._data?.user_id,
-                            age: existingDoc?._data?.age,
-                            name: existingDoc?._data?.name,
-                            gender: existingDoc?._data?.gender,
-                            state: existingDoc?._data?.state,
-                            stateCode: existingDoc?._data?.stateCode,
-                            city: existingDoc?._data?.city
-                        }));
-                        navigation.replace(AppRoutes?.BottomBar);
-                    } else {
-                        const fireUtils = useFireStoreUtil();
-                        const user_id = await fireUtils.creatingCustomerUser(
-                            additionalUserInfo?.profile?.picture,
-                            additionalUserInfo?.profile?.name,
-                            additionalUserInfo?.profile?.email,
-                            ""
-                        );
-                        if (user_id) {
-                            dispatch(setUserId(user_id));
-                            navigation.navigate(AppRoutes?.ScreenForUserDetail);
-                        }
+                    let data = {
+                        profile_picture : additionalUserInfo?.profile?.picture,
+                        name : additionalUserInfo?.profile?.name,
+                        email : additionalUserInfo?.profile?.email
+                    }
+                    const res : any = await creatingUserApi(data)
+                    if (res?.status == 200) {
+                        dispatch(setUserId(res?.data?.user?._id));
+                        navigation.navigate(AppRoutes?.ScreenForUserDetail);
                     }
                 }
             }
