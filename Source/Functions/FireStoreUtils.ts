@@ -548,7 +548,7 @@ export default function useFireStoreUtil() {
                 .collection(FireKeys.Comment)
                 .doc(productId)
                 .collection("List")
-                .orderBy("createdAt", "desc") // optional: latest first
+                .orderBy("createdAt", "desc")
                 .get();
 
             const comments = response.docs.map((doc) => ({
@@ -556,7 +556,6 @@ export default function useFireStoreUtil() {
                 ...doc.data(),
             }));
 
-            console.log("✅ All comments: ------- in firebase", comments);
             return comments;
         } catch (error) {
             console.error("❌ Error getting comments:", error);

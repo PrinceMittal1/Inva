@@ -35,7 +35,6 @@ const CommentModal = ({ visible, onCrossPress, productId }: any) => {
     try {
       const fireUtils = useFireStoreUtil();
       const response: any = await fireUtils.gettingAllCommentsWithReplies(productId)
-      const responsed: any = await fireUtils.gettingAllComments(productId)
       setAllComments(response)
     } catch (e: any) {
     } finally {
@@ -148,7 +147,7 @@ const CommentModal = ({ visible, onCrossPress, productId }: any) => {
               data={allComments}
               style={{ marginTop: 18 }}
               showsVerticalScrollIndicator={false}
-              keyExtractor={(item) => `${item?.id}-${item.replies.length}`}
+              keyExtractor={(item : any) => `${item?.id}`}
               renderItem={({ item, index }: any) => {
                 return <CommentBlocks item={item} chatInputEnabledId={chatInputEnabledId} setChatInputEnabledIdfunc={setChatInputEnabledIdfunc} setChatInputEnabledFunc={setChatInputEnabledFunc} index={index} onCrossPress={onCrossPress} fetchingComments={fetchingComments} onReplyPress={onReplyPress} deletingComments={deletingComments} />;
               }}

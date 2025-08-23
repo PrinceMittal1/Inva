@@ -10,6 +10,7 @@ import AppRoutes from "../Routes/AppRoutes";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import { useDispatch } from "react-redux";
 import { setUserId } from "../Redux/Reducers/userData";
+import { creatingUserApi } from "../Apis";
 
 const VerificationScreen = () => {
     const insets = useSafeAreaInsets();
@@ -27,19 +28,14 @@ const VerificationScreen = () => {
         }
         try {
             await confirm.confirm(otpValue);
-
-            const fireUtils = useFireStoreUtil();
-            const user_id = await fireUtils.creatingCustomerUser(
-                '',
-                '',
-                '',
-                phoneNumber
-            );
-            if (user_id) {
-                dispatch(setUserId(user_id));
+            let data = {
+                phoneNumber: phoneNumber
+            }
+            const res : any = await creatingUserApi(data)
+            if (res?.status == 200) {
+                dispatch(setUserId(res?.data?.user?._id));
                 navigation.navigate(AppRoutes?.ScreenForUserDetail);
             }
-            navigation.navigate(AppRoutes?.ScreenForUserDetail);
         } catch (error) {
             console.log('Invalid code.', error);
         }

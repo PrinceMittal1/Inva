@@ -3,7 +3,7 @@ import { ActivityIndicator, Dimensions, FlatList, Platform, Pressable, SafeAreaV
 import Header from "../Components/Header"
 import ImagePickerModal from "../Components/ImagePickerModal"
 import storage from '@react-native-firebase/storage';
-import RNFS from 'react-native-fs';
+import RNFS, { stat } from 'react-native-fs';
 import { useDispatch, useSelector } from "react-redux";
 import { setUserId } from "../Redux/Reducers/userData";
 import { useNavigation } from "@react-navigation/native";
@@ -16,13 +16,13 @@ import { getApp } from 'firebase/app';
 import { getProductsForHome } from "../Apis";
 import CommentModal from "../Components/Comments/CommentModal";
 import Colors from "../Keys/colors";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get('window')
 const Home = () => {
-    const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
     const [allProducts, setAllProducts] = useState<any>([])
     const [loading, setLoading] = useState<boolean>(false);
-    const dispatch = useDispatch();
+    const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const [loader, setLoader] = useState(false)
     const { user_id } = useSelector((state: any) => state.userData);
@@ -33,7 +33,7 @@ const Home = () => {
     });
     const [showComment, setShowComment] = useState({
         state: false,
-        id: ''
+        _id: ''
     })
     const visibleItemsTimers = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
@@ -71,12 +71,10 @@ const Home = () => {
     };
 
     let fetchingProducts = async () => {
-        const fireUtils = useFireStoreUtil();
         setLoader(true)
         try {
-            const products = await getProductsForHome({ customerUserId: user_id });
-            // const products = await fireUtils?.gettingProductForHome(user_id)
-            setAllProducts(products)
+            const res = await getProductsForHome({ customerUserId: user_id });
+            setAllProducts(res?.data?.products)
         } catch (error) {
             console.error('❌ Failed to fetch products:', error);
         } finally {
@@ -89,12 +87,9 @@ const Home = () => {
     }, [])
 
     const statusChangingForFollow = (id: any, state: boolean) => {
-
-        console.log("statusChangingForFollow ---------- ", id, state)
-
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product.user_id === id
+                product._id === id
                     ? { ...product, follow: state }
                     : product
             )
@@ -104,18 +99,8 @@ const Home = () => {
     const savingItemInWishlist = (id: any, state: boolean) => {
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product.id === id
+                product._id === id
                     ? { ...product, saved: state }
-                    : product
-            )
-        );
-    }
-
-    const savingItemToCompare = (id: any, state: boolean) => {
-        setAllProducts(prevProducts =>
-            prevProducts.map(product =>
-                product.id === id
-                    ? { ...product, comparedAdded: state }
                     : product
             )
         );
@@ -131,7 +116,7 @@ const Home = () => {
                 onCommentPress={() => {
                     setShowComment({
                         state: true,
-                        id: item?.id
+                        _id: item?._id
                     })
                 }}
                 onComparisonPress={() => {
@@ -159,7 +144,7 @@ const Home = () => {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', marginTop: (statusBarHeight + 0) }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', paddingTop: insets.top, paddingBottom:insets.bottom }}>
                 <Header title={'Home'}
                     showbackIcon={false}
                     rightIcon={Images?.savedFilled}
@@ -171,7 +156,7 @@ const Home = () => {
                 <FlatList
                     data={allProducts}
                     renderItem={RenderItem}
-                    keyExtractor={(item) => `${item.id}-${item.follow}-${item.saved}`}
+                    keyExtractor={(item, index) => `${index}-${item?.saved}`}
                     onViewableItemsChanged={onViewableItemsChanged.current}
                     viewabilityConfig={viewabilityConfig.current}
                     ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
@@ -179,7 +164,7 @@ const Home = () => {
 
                 {showComment?.state && (
                     <CommentModal
-                        productId={showComment?.id}
+                        productId={showComment?._id}
                         visible={showComment?.state}
                         onCrossPress={() => setShowComment({
                             state: false,
