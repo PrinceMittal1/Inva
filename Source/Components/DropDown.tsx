@@ -15,13 +15,17 @@ interface DropdownProps {
   options: string[];
   selectedValue: string;
   onValueChange: (value: string) => void;
+  alreadySelectedOptions?: any;
+  removeItem?: any;
   label?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
   options,
   selectedValue,
+  alreadySelectedOptions,
   onValueChange,
+  removeItem,
   label,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -30,6 +34,17 @@ const Dropdown: React.FC<DropdownProps> = ({
     onValueChange(value);
     setModalVisible(false);
   };
+
+  const removeItems = (value: string) => {
+    removeItem(value);
+    setModalVisible(false);
+  }
+
+  const selectedOrNot = (item) => {
+    if (!alreadySelectedOptions || alreadySelectedOptions?.length == 0) return false
+    if (alreadySelectedOptions?.includes(item)) return true
+    return false
+  }
 
   return (
     <View style={styles.container}>
@@ -52,8 +67,8 @@ const Dropdown: React.FC<DropdownProps> = ({
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={styles.option}
-                  onPress={() => handleSelect(item)}
+                  style={selectedOrNot(item) ? styles.optionSelected : styles?.option}
+                  onPress={() => { selectedOrNot(item) ? removeItems(item) : handleSelect(item) }}
                 >
                   <Text>{item}</Text>
                 </TouchableOpacity>
@@ -78,6 +93,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#333',
   },
+  optionSelected : {
+    padding: 12,
+    borderBottomWidth: 1,
+    backgroundColor: Colors?.buttonPrimaryColor,
+    borderBottomColor: '#eee',
+  },
   dropdown: {
     padding: 12,
     borderWidth: 1,
@@ -87,7 +108,7 @@ const styles = StyleSheet.create({
   selectedText: {
     fontSize: 16,
     color: Colors?.DarkText,
-    fontFamily:AppFonts.Regular
+    fontFamily: AppFonts.Regular
   },
   modalOverlay: {
     flex: 1,

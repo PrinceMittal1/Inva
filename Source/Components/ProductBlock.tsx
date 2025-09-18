@@ -64,13 +64,14 @@ const ProductBlock = ({
     const toggleFollowInSubcollections = async () => {
         try {
             const res = await followSeller(user_id, blockItem?.sellerId)
-
+            if(res?.status == 201){
+                setBlockItem({...blockItem, followed : false})
+            }else if(res?.status == 200){
+                 setBlockItem({...blockItem, followed : true})
+            }
         } catch (error) {
-            
         }
     };
-
-    console.log(" cmn bn nvm =========== ", blockItem?.followed)
 
     const toggleSavingCollection = async () => {
         let product_id = blockItem?._id
@@ -98,12 +99,13 @@ const ProductBlock = ({
                         style={styles.sellerInfo}
                         onPress={() => {
                             navigation.navigate(AppRoutes?.SellerProfile, {
-                                seller_id: blockItem?.sellerId
+                                seller_id: blockItem?.sellerId,
+                                seller_name : blockItem?.sellerName
                             });
                         }}
                     >
                         <FastImage
-                            source={{ uri: blockItem?.businessUser?.photo }}
+                            source={{ uri: blockItem?.sellerProfile ?? '' }}
                             style={styles.sellerImage}
                             resizeMode="contain"
                         />
@@ -117,7 +119,7 @@ const ProductBlock = ({
                         style={styles.followBtn}
                     >
                         <Text style={styles.followBtnText}>
-                            {blockItem?.follow ? "UnFollow" : "Follow"}
+                            {blockItem?.followed ? "UnFollow" : "Follow"}
                         </Text>
                     </TouchableOpacity>
                 }
@@ -141,7 +143,7 @@ const ProductBlock = ({
                             style={styles.productImagePressable}
                             onPress={() => {
                                 navigation.navigate(AppRoutes?.productDetail, {
-                                    productId: blockItem?.id
+                                    productId: blockItem?._id
                                 });
                             }}
                         >
@@ -259,6 +261,8 @@ const useStyles = () =>
             borderWidth: 1,
             borderColor: 'black',
             padding: 5,
+            maxWidth : wp(30),
+            // alignSelf:'flex-end',
             paddingHorizontal: 20,
             borderRadius: 15
         },

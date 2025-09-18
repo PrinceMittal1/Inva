@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import keys from "../Routes/AppRoutes";
 import Login from "../Screens/LoginScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -14,24 +14,34 @@ import WishList from "../Screens/WishList";
 import Chat from "../Screens/Chat";
 import ProductDetail from "../Screens/ProductDetailsScreen";
 import VerificationScreen from "../Screens/VerificationScreen";
+import { setupDeepLinkListeners } from "../Functions/AppsFlyerConfig";
+import { useNavigation } from "@react-navigation/native";
 
 const MainStack = () => {
     const Stack = createNativeStackNavigator();
-    const {loading} = useSelector((state : any) => state?.tempData)
+    const navigation = useNavigation();
+    const { loading } = useSelector((state: any) => state?.tempData)
+
+    useEffect(() => {
+        setupDeepLinkListeners(navigation);
+        return () => {
+            
+        };
+    }, [navigation]);
     return (
         <>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name={keys.Splash} component={Splash} />
-            <Stack.Screen name={keys.Login} component={Login} />
-            <Stack.Screen name={keys.VerificationScreen} component={VerificationScreen} />
-            <Stack.Screen name={keys.ScreenForUserDetail} component={ScreenForUserDetails} />
-            <Stack.Screen name={keys.SellerProfile} component={SellerProfile} />
-            <Stack.Screen name={keys.WishList} component={WishList} />
-            <Stack.Screen name={keys?.Chat} component={Chat} />
-            <Stack.Screen name={keys?.productDetail} component={ProductDetail} />
-            <Stack.Screen name={keys.BottomBar} component={BottomTabs} />
-        </Stack.Navigator>
-        {loading && <Loader />}</>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name={keys.Splash} component={Splash} />
+                <Stack.Screen name={keys.Login} component={Login} />
+                <Stack.Screen name={keys.VerificationScreen} component={VerificationScreen} />
+                <Stack.Screen name={keys.ScreenForUserDetail} component={ScreenForUserDetails} />
+                <Stack.Screen name={keys.SellerProfile} component={SellerProfile} />
+                <Stack.Screen name={keys.WishList} component={WishList} />
+                <Stack.Screen name={keys?.Chat} component={Chat} />
+                <Stack.Screen name={keys?.productDetail} component={ProductDetail} />
+                <Stack.Screen name={keys.BottomBar} component={BottomTabs} />
+            </Stack.Navigator>
+            {loading && <Loader />}</>
     )
 }
 

@@ -7,52 +7,6 @@ interface GetProductsRequestForSeller {
   sellerId: string;
 }
 
-export const getProductsForSellerPage = async (
-  payload: GetProductsRequestForSeller
-) => {
-  try {
-    const response = await axios.post('https://getsellerproducts-ty3v52ngjq-uc.a.run.app', payload, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    return response.data;
-  } catch (error: any) {
-    throw error;
-  }
-};
-
-export const getProductsForWishlistPage = async (
-  payload: any
-) => {
-  try {
-    const response = await axios.post('https://getsavedproducts-ty3v52ngjq-uc.a.run.app', payload, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    return response.data;
-  } catch (error: any) {
-    throw error;
-  }
-};
-
-
-export const updatingUser = async (payload: any) => {
-  try {
-    const response = await axios.post('http://127.0.0.1:5001/inva-b5b22/us-central1/updateCustomerUserDetail', payload, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw error;
-  }
-}
-
 
 
 export const creatingUserApi = async (payload: any) => {
@@ -102,7 +56,7 @@ export const getProductsForHome = async (payload: any) => {
     );
     return response;
   } catch (error: any) {
-    console.log("response is ----- error ", error)
+    console.log("response is ----- home ", error)
   }
 };
 
@@ -144,9 +98,117 @@ export const followSeller = async (user_id: string, seller_id: string) => {
       seller_id,
     });
 
-    return response.data;
+    return response;
   } catch (error: any) {
     console.error("Follow API error:", error.response?.data || error.message);
     throw error;
+  }
+};
+
+export const gettingProductDetail = async(payload: any) =>{
+  try {
+    const response = await axios.get(
+      `${apiUrl}product/detail`,
+      {
+        params: payload,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- detail ", error)
+  }
+}
+
+
+export const fetchingSellerProfile = async(payload: any) =>{
+  try {
+    const response = await axios.get(
+      `${apiUrl}seller/profile`,
+      {
+        params: payload,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    console.log("response is  ", error)
+  }
+}
+
+export const getProductsForSellerPage = async (payload: any) => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}product/seller/products/for/customer`,
+      {
+        params: payload,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- seller page ", error)
+  }
+}
+
+
+export const handleItemViewed = async(product_id: string) =>{
+  try {
+    const response = await axios.post(`${apiUrl}product/viewed`, {
+      product_id,
+    });
+    return response;
+  } catch (error: any) {
+    console.error("Follow API error:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+
+export const getProductsForWishlistPage = async (
+  payload: any
+) => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}users/wishlist`,
+      {
+        params: payload,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- wishlist page ", error)
+  }
+};
+
+
+export const getUserProfile = async (
+  payload: any
+) => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}users/detail`,
+      {
+        params: payload,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- profile  ", error)
+  }
+};
+
+
+export const deleteUser = async (payload: any) => {
+  try {
+    const response = await axios.delete(`${apiUrl}users/delete`, {
+      headers: { 'Content-Type': 'application/json' },
+      data: payload   // <--- important, otherwise req.body will be undefined
+    });
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- delete ", error);
   }
 };

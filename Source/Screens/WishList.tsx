@@ -6,10 +6,11 @@ import FastImage from "@d11/react-native-fast-image";
 import { useSelector } from "react-redux";
 import ProductBlock from "../Components/ProductBlock";
 import Header from "../Components/Header";
-import { getProductsForWishlistPage } from "../Apis";
+import { getProductsForWishlistPage, handleItemViewed } from "../Apis";
 import { useNavigation } from "@react-navigation/native";
 import Images from "../Keys/Images";
 import AppRoutes from "../Routes/AppRoutes";
+import CommentModal from "../Components/Comments/CommentModal";
 
 const WishList = () => {
     const [allProducts, setAllProducts] = useState<any>({});
@@ -20,14 +21,14 @@ const WishList = () => {
     const [loader, setLoader] = useState(false)
     const [showComment, setShowComment] = useState({
         state: false,
-        id: ''
+        _id: ''
     })
 
     const fetchingWishListProduct = async () => {
         setLoader(true)
         try {
-            const products = await getProductsForWishlistPage({ customerUserId: user_id });
-            setAllProducts(products)
+            const res = await getProductsForWishlistPage({ user_id });
+            setAllProducts(res?.data?.products)
         } catch (e) {
         } finally {
             setLoader(false)
@@ -40,7 +41,7 @@ const WishList = () => {
 
     const viewabilityConfig = useRef({
         itemVisiblePercentThreshold: 70,
-        minimumViewTime: 5000,
+        minimumViewTime: 3500,
     });
     const visibleItemsTimers = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
@@ -52,31 +53,19 @@ const WishList = () => {
             }
         });
         viewableItems.forEach(({ item }) => {
-            if (!visibleItemsTimers.current[item.id]) {
-                visibleItemsTimers.current[item.id] = setTimeout(() => {
-                    handleItemViewed(item.id);
-                    delete visibleItemsTimers.current[item.id];
-                }, 5000);
+            if (!visibleItemsTimers.current[item._id]) {
+                visibleItemsTimers.current[item._id] = setTimeout(async() => {
+                    await handleItemViewed(item._id);
+                    delete visibleItemsTimers.current[item._id];
+                }, 3500);
             }
         });
     });
 
-    const handleItemViewed = async (productId: string) => {
-        const fireUtils = useFireStoreUtil();
-        let resultOfView = await fireUtils.recordingView(productId)
-        setAllProducts(prevProducts =>
-            prevProducts.map(product =>
-                product.id === productId
-                    ? { ...product, viewCount: resultOfView } // New object
-                    : product
-            )
-        );
-    };
-
     const statusChangingForFollow = (id: any, state: boolean) => {
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product.user_id === id
+                product._id === id
                     ? { ...product, follow: state }
                     : product
             )
@@ -86,7 +75,7 @@ const WishList = () => {
     const savingItemInWishlist = (id: any, state: boolean) => {
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product.user_id === id
+                product._id === id
                     ? { ...product, saved: state }
                     : product
             )
@@ -96,7 +85,8 @@ const WishList = () => {
 
     const RenderItem = ({ item, index }: any) => {
         return (
-            <ProductBlock item={item}
+            <ProductBlock 
+                item={item}
                 showFollowButton={true}
                 statusChangingForFollow={statusChangingForFollow}
                 showShopName={true}
@@ -106,12 +96,14 @@ const WishList = () => {
                 onCommentPress={() => {
                     setShowComment({
                         state: true,
-                        id: item?.id
+                        _id: item?._id
                     })
                 }}
             />
         )
     }
+
+    console.log("products are --------- ", allProducts)
 
 
     return (
@@ -137,18 +129,18 @@ const WishList = () => {
                 <FlatList
                     data={allProducts}
                     renderItem={RenderItem}
-                    keyExtractor={(item) => `${item.id}-${item.follow}-${item.saved}`}
+                    keyExtractor={(item, index) => `${index}-${item?.saved}`}
                     onViewableItemsChanged={onViewableItemsChanged.current}
                     viewabilityConfig={viewabilityConfig.current}
                     ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
                 />
                 {showComment?.state && (
                     <CommentModal
-                        productId={showComment?.id}
+                        productId={showComment?._id}
                         visible={showComment?.state}
                         onCrossPress={() => setShowComment({
                             state: false,
-                            id: ''
+                            _id: ''
                         })}
                     />
                 )}

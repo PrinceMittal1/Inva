@@ -603,22 +603,28 @@ export default function useFireStoreUtil() {
         }
     };
 
-    const createOrGetChatRoom = async (sellerId: string, customerId: string) => {
+    const createOrGetChatRoom = async (sellerId: string,seller_name:string, seller_profile : string, customerId: string,customer_name = '', customer_profile : string) => {
         const chatRoomId = sellerId + '_' + customerId;
         const chatRoomRef = firestore().collection('Chats').doc(chatRoomId);
-
         const chatDoc = await chatRoomRef.get();
-
-        if (!chatDoc.exists) {
-            await chatRoomRef.set({
-                sellerId: sellerId,
-                customerId: customerId,
-                unseenMessages: 0,
-                lastMessage: '',
-                lastUpdated: firestore.FieldValue.serverTimestamp(),
-            });
+        if (!chatDoc.exists()) {
+            try {
+                await chatRoomRef.set({
+                    sellerId,
+                    seller_name,
+                    seller_profile,
+                    customerId,
+                    customer_name,
+                    customer_profile,
+                    unseenMessages: 0,
+                    lastMessage: '',
+                    lastUpdated: firestore.FieldValue.serverTimestamp(),
+                });
+                console.log("✅ Chat room created:", chatRoomId);
+            } catch (err) {
+                console.error("🔥 Error creating chat room:", err);
+            }
         }
-
         return chatRoomRef;
     };
 
@@ -667,14 +673,18 @@ export default function useFireStoreUtil() {
                 timestamp: firestore.FieldValue.serverTimestamp(),
             };
         }
-
         await chatRoomRef.collection('messages').add(messageData);
-
-
-        await chatRoomRef.update({
-            lastMessage: text,
-            lastUpdated: firestore.FieldValue.serverTimestamp(),
-        });
+        try {
+            await chatRoomRef.set(
+                {
+                    lastMessage: text,
+                    lastUpdated: firestore.FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+            );
+        } catch (err) {
+            console.error("🔥 Error updating chat room:", err);
+        }
 
         return true
     };

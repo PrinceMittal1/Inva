@@ -16,7 +16,7 @@ import ImageCropPicker from "react-native-image-crop-picker";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
 import Geolocation from "@react-native-community/geolocation";
-import { updatingUser, updatingUserApi } from "../Apis";
+import { updatingUserApi } from "../Apis";
 
 const { width, height } = Dimensions.get('window');
 
@@ -166,7 +166,8 @@ const ScreenForUserDetails = () => {
             state: selectedStateCode?.value,
             city: selectedCity,
             profile_picture: profile_picture,
-            interest: selectedTags
+            interest: selectedTags,
+            name : name,
         })
         if (ref?.status == 200) {
             navigation.reset({

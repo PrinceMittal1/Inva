@@ -6,14 +6,14 @@ import storage from '@react-native-firebase/storage';
 import RNFS, { stat } from 'react-native-fs';
 import { useDispatch, useSelector } from "react-redux";
 import { setUserId } from "../Redux/Reducers/userData";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import AppRoutes from "../Routes/AppRoutes";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import ProductBlock from "../Components/ProductBlock";
 import Images from "../Keys/Images";
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
-import { getProductsForHome } from "../Apis";
+import { getProductsForHome, handleItemViewed } from "../Apis";
 import CommentModal from "../Components/Comments/CommentModal";
 import Colors from "../Keys/colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,12 +29,13 @@ const Home = () => {
     const [visibleItems, setVisibleItems] = useState<{ [key: string]: number }>({});
     const viewabilityConfig = useRef({
         itemVisiblePercentThreshold: 70,
-        minimumViewTime: 5000,
+        minimumViewTime: 3500,
     });
     const [showComment, setShowComment] = useState({
         state: false,
         _id: ''
     })
+    const focus = useIsFocused();
     const visibleItemsTimers = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
     const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: any[] }) => {
@@ -46,29 +47,14 @@ const Home = () => {
         });
 
         viewableItems.forEach(({ item }) => {
-            if (!visibleItemsTimers.current[item.id]) {
-                visibleItemsTimers.current[item.id] = setTimeout(() => {
-                    // This function will be called after 5 seconds of continuous visibility
-                    handleItemViewed(item.id);
-
-                    // Clear the timer after it's triggered
-                    delete visibleItemsTimers.current[item.id];
-                }, 5000);
+            if (!visibleItemsTimers.current[item._id]) {
+                visibleItemsTimers.current[item._id] = setTimeout(async() => {
+                    await handleItemViewed(item._id);
+                    delete visibleItemsTimers.current[item._id];
+                }, 3500);
             }
         });
     });
-
-    const handleItemViewed = async (productId: string) => {
-        const fireUtils = useFireStoreUtil();
-        let resultOfView = await fireUtils.recordingView(productId)
-        setAllProducts(prevProducts =>
-            prevProducts.map(product =>
-                product.id === productId
-                    ? { ...product, viewCount: resultOfView } // New object
-                    : product
-            )
-        );
-    };
 
     let fetchingProducts = async () => {
         setLoader(true)
@@ -83,8 +69,8 @@ const Home = () => {
     }
 
     useEffect(() => {
-        fetchingProducts();
-    }, [])
+        focus && fetchingProducts();
+    }, [focus])
 
     const statusChangingForFollow = (id: any, state: boolean) => {
         setAllProducts(prevProducts =>
@@ -168,7 +154,7 @@ const Home = () => {
                         visible={showComment?.state}
                         onCrossPress={() => setShowComment({
                             state: false,
-                            id: ''
+                            _id: ''
                         })}
                     />
                 )}

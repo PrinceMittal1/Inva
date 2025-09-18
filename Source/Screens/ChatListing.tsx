@@ -49,21 +49,21 @@ const ChatListing = () => {
                     navigation.navigate(AppRoutes?.Chat, {
                         sellerId: item?.sellerId,
                         user_id: item?.customerId,
-                        sellerDisplayName: item?.business_name
+                        sellerDisplayName: item?.seller_name
                     });
                 }}
                 style={styles.chatItem}
             >
                 <View style={styles.imageContainer}>
                     <FastImage
-                        source={{ uri: `${item?.business_picture}` }}
+                        source={{ uri: `${item?.seller_profile}` }}
                         style={styles.image}
                         resizeMode="contain"
                     />
                 </View>
 
                 <View style={styles.textContainer}>
-                    <Text style={styles.businessName}>{item?.business_name}</Text>
+                    <Text style={styles.businessName}>{item?.seller_name}</Text>
                     <Text>{item?.lastMessage}</Text>
                 </View>
 
@@ -129,10 +129,10 @@ const styles = StyleSheet.create({
         alignSelf: "center"
     },
     chatItem: {
-        backgroundColor: "grey",
+        backgroundColor: "rgba(128, 128, 128, 0.5)",
         flexDirection: "row",
         alignItems: "center",
-        padding: 5,
+        padding: 10,
         marginTop: 10,
         borderRadius: 5
     },

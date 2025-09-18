@@ -1815,6 +1815,16 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@notifee/react-native@^9.1.8":
+  version "9.1.8"
+  resolved "https://registry.yarnpkg.com/@notifee/react-native/-/react-native-9.1.8.tgz#3d55cb3fbcc21f9e35931e366afdf64b294da891"
+  integrity sha512-Az/dueoPerJsbbjRxu8a558wKY+gONUrfoy3Hs++5OqbeMsR0dYe6P+4oN6twrLFyzAhEA1tEoZRvQTFDRmvQg==
+
+"@pinecone-database/pinecone@^6.1.2":
+  version "6.1.2"
+  resolved "https://registry.yarnpkg.com/@pinecone-database/pinecone/-/pinecone-6.1.2.tgz#7079eb122c92d81a849737b142e2cafc9a29f647"
+  integrity sha512-ydIlbtgIIHFgBL08sPzua5ckmOgtjgDz8xg21CnP1fqnnEgDmOlnfd10MRKU+fvFRhDlh4Md37SwZDr0d4cBqg==
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
@@ -2057,6 +2067,11 @@
   integrity sha512-8kMh2FNdLQj9A9wDk8xye+iRneeL29Qx3OBbTiGLjsXTuybZdi6Ww+UpoClwwLorlmXA827GLyO4kNtwkYh1pQ==
   dependencies:
     react-native-url-polyfill "2.0.0"
+
+"@react-native-firebase/messaging@^22.4.1":
+  version "22.4.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/messaging/-/messaging-22.4.0.tgz#91e88deb8cba799c06e847577c0c61fdcfe381cf"
+  integrity sha512-iuTA8IJ102pQijFejhWZXxVIt4+JJ5n3JTN8Mb+OXZmIVswUZ4ryErk8Y0RhcFiIwEF5a99ziJfPybA1EheVLg==
 
 "@react-native-firebase/storage@^22.4.0":
   version "22.4.0"
@@ -5981,6 +5996,11 @@ open@^7.0.3:
     is-docker "^2.0.0"
     is-wsl "^2.1.1"
 
+openai@^5.12.2:
+  version "5.12.2"
+  resolved "https://registry.yarnpkg.com/openai/-/openai-5.12.2.tgz#512ab6b80eb8414837436e208f1b951442b97761"
+  integrity sha512-xqzHHQch5Tws5PcKR2xsZGX9xtch+JQFz5zb14dGqlshmmDAFBFEWmeIpf7wVqWV+w7Emj7jRgkNJakyKE0tYQ==
+
 optionator@^0.9.3:
   version "0.9.4"
   resolved "https://registry.yarnpkg.com/optionator/-/optionator-0.9.4.tgz#7ea1c1a5d91d764fb282139c88fe11e182a3a734"
@@ -6317,6 +6337,11 @@ react-native-animatable@1.4.0:
   integrity sha512-DZwaDVWm2NBvBxf7I0wXKXLKb/TxDnkV53sWhCvei1pRyTX3MVFpkvdYBknNBqPrxYuAIlPxEp7gJOidIauUkw==
   dependencies:
     prop-types "^15.8.1"
+
+react-native-appsflyer@^6.17.5:
+  version "6.17.5"
+  resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.17.5.tgz#21ad14f1aca1f34ae6ef16bb9ee939f226574fb0"
+  integrity sha512-0TOUZjFg7wFIttS5sunjulzipqMl0pdg7dBMwothS9nTlXivlj0IXbYs2RiYcLjmpw81cvtbTRpNCpyjZaORAQ==
 
 react-native-device-info@^14.0.4:
   version "14.0.4"

@@ -11,6 +11,7 @@ import useFireStoreUtil from "../Functions/FireStoreUtils";
 import { useDispatch } from "react-redux";
 import { setUserId } from "../Redux/Reducers/userData";
 import { creatingUserApi } from "../Apis";
+import { apiUrl } from "../env";
 
 const VerificationScreen = () => {
     const insets = useSafeAreaInsets();
@@ -32,6 +33,7 @@ const VerificationScreen = () => {
                 phoneNumber: phoneNumber
             }
             const res : any = await creatingUserApi(data)
+            console.log("res ++ ", res)
             if (res?.status == 200) {
                 dispatch(setUserId(res?.data?.user?._id));
                 navigation.navigate(AppRoutes?.ScreenForUserDetail);
@@ -41,6 +43,7 @@ const VerificationScreen = () => {
         }
     };
 
+                console.log("res ++ ", `${apiUrl}users/create`)
 
     return (
         <View style={{
@@ -49,7 +52,7 @@ const VerificationScreen = () => {
             paddingBottom: insets.bottom,
             backgroundColor: Colors?.PrimaryBackground,
         }}>
-            <Header />
+            <Header title={'Verify'}/>
 
             <View style={{ width: wp(90), alignSelf: 'center', alignItems: 'center', marginVertical: hp(2) }}>
                 <Text style={{ textAlign: 'center', marginHorizontal: wp(5), fontFamily: AppFonts.Regular, fontSize: 15, lineHeight: 22 }}>Please verify your phone number by adding 6 digit OTP</Text>

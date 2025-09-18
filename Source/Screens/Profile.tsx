@@ -9,13 +9,15 @@ import {
     View,
     PermissionsAndroid,
     StyleSheet,
-    ActivityIndicator
+    ActivityIndicator,
+    TextInput,
+    ScrollView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Dropdown from "../Components/DropDown";
 import { hp, wp } from "../Keys/dimension";
 import { useEffect, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import Images from "../Keys/Images";
 import ImageCropPicker from "react-native-image-crop-picker";
 import BottomButton from "../Components/BottomButton";
@@ -28,12 +30,12 @@ import { setUserData, setUserId } from "../Redux/Reducers/userData";
 import Geolocation from "@react-native-community/geolocation";
 import AppFonts from "../Functions/Fonts";
 import Colors from "../Keys/colors";
-import { updatingUser } from "../Apis";
+import { deleteUser, getUserProfile, updatingUserApi } from "../Apis";
+import { apiUrl } from "../env";
 
 const { width, height } = Dimensions.get("window");
 
 const Profile = () => {
-    const statusBarHeight = Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0;
     const [profileImage, setProfileImage] = useState<any>(null);
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState("Kharar");
@@ -43,8 +45,13 @@ const Profile = () => {
         code: "PB",
         value: "Punjab"
     });
-    const [loader, setLoader] = useState(false)
+    const [selected, setSelected] = useState('18');
+    const [name, setName] = useState("");
+    const [selectedGender, setSelectedGender] = useState('Female');
     const [selectedTags, setSelectedTags] = useState([]);
+    const [loader, setLoader] = useState(false)
+    const ageOptions = Array.from({ length: 89 }, (_, i) => (i + 12).toString());
+    const focus = useIsFocused();
     const { user_id, userData } = useSelector((state: any) => state.userData);
 
     const dispatch = useDispatch();
@@ -89,22 +96,35 @@ const Profile = () => {
         );
     }
 
+    const fetchingUserDetail = async () => {
+        try {
+            setLoader(true)
+            const res = await getUserProfile({ user_id });
+            dispatch(setUserData(res?.data?.data));
+            setSelectedStateCode({
+                code: res?.data?.data?.stateCode,
+                value: res?.data?.data?.state
+            });
+            setName(res?.data?.data?.name)
+            setProfileImage(res?.data?.data?.profile_picture);
+            setSelectedTags(res?.data?.data?.interest);
+            setSelectedCity(res?.data?.data?.city);
+            setLoader(false)
+            // const indianStates = State.getStatesOfCountry("IN");
+            // setStates(indianStates.map(s => `${s.name} (${s.isoCode})`));
+            // const citiesList = City.getCitiesOfState("IN", res?.data?.data?.stateCode ?? "PB");
+            // setCities(citiesList.map(c => c.name));
+        } catch (error) {
+        } finally {
+            setLoader(false)
+        }
+    }
+
+
+
     useEffect(() => {
-        setLoader(true)
-        setSelectedStateCode({
-            code: userData?.stateCode,
-            value: userData?.state
-        });
-        setProfileImage(userData?.profile_picture);
-        setSelectedTags(userData?.interest);
-        setSelectedCity(userData?.city);
-        const indianStates = State.getStatesOfCountry("IN");
-        setStates(indianStates.map(s => `${s.name} (${s.isoCode})`));
-        const citiesList = City.getCitiesOfState("IN", userData?.stateCode ?? "PB");
-        setCities(citiesList.map(c => c.name));
-        getUserLocation();
-        setLoader(false)
-    }, [userData]);
+        fetchingUserDetail();
+    }, [focus]);
 
     const openGallery = () => {
         try {
@@ -128,27 +148,20 @@ const Profile = () => {
         if (profileImage?.path) {
             profile_picture = await fireUtils.uploadMediaToFirebase(profileImage?.path);
         }
-        const ref = await updatingUser({
-            user_id: user_id,
-            age: null,
-            gender: null,
+        const ref = await updatingUserApi({
+            age: Number(selected),
+            _id: user_id,
+            gender: selectedGender.toLocaleLowerCase(),
             stateCode: selectedStateCode?.code,
             state: selectedStateCode?.value,
             city: selectedCity,
             profile_picture: profile_picture,
-            interest: selectedTags
+            interest: selectedTags,
+            name : name
         })
 
-
-        if (ref) {
-            dispatch(setUserData({
-                ...userData,
-                stateCode: selectedStateCode?.code,
-                state: selectedStateCode?.value,
-                city: selectedCity,
-                profile_picture: profile_picture,
-                interest: selectedTags
-            }))
+        if (ref?.status == 200 ) {
+            dispatch(setUserData(ref?.data?.userData))
             navigation.goBack();
         }
     };
@@ -188,6 +201,13 @@ const Profile = () => {
         );
     };
 
+    const ClickedOnDelete = async() =>{
+        const res = await deleteUser({ user_id });
+        if(res?.status == 200){
+            loggingOut();
+        }
+    }
+
     return (
         <>
             {loader && (
@@ -205,71 +225,109 @@ const Profile = () => {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
+            <SafeAreaView style={[styles.safeArea]}>
                 <Header title={"Profile"} rightIcon={Images?.logout} rightClick={loggingOut} />
 
-                <View style={styles.profileImageWrapper}>
-                    <FastImage
-                        style={styles.profileImage}
-                        source={
-                            profileImage && !profileImage?.path
-                                ? { uri: profileImage }
-                                : !profileImage && !profileImage?.path
-                                    ? Images?.person
-                                    : { uri: profileImage.path }
-                        }
-                    />
-                    <Pressable onPress={openGallery}>
+                <ScrollView style={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
+
+                    <View style={styles.profileImageWrapper}>
                         <FastImage
-                            source={Images?.EditForProductBlock}
-                            style={styles.editIcon}
-                            resizeMode="contain"
-                        />
-                    </Pressable>
-                </View>
-
-                <View style={[styles.dropdownWrapper, { marginTop: hp(3) }]}>
-                    <Text style={styles.inputLabel}>Select Your state</Text>
-                    <Dropdown
-                        options={states}
-                        selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ""}
-                        onValueChange={handleStateChange}
-                    />
-                </View>
-
-                <View style={[styles.dropdownWrapper]}>
-                    <Text style={styles.inputLabel}>Select Your City</Text>
-                    <Dropdown
-                        label="Select City"
-                        options={cities}
-                        selectedValue={selectedCity}
-                        onValueChange={setSelectedCity}
-                    />
-                </View>
-
-                <View style={styles.dropdownWrapper}>
-                    <Text style={styles.inputLabel}>Interest</Text>
-                    <View style={styles.tagsContainer}>
-                        {selectedTags?.map((item, index) => (
-                            <RenderItemForSelectedProduct key={index} item={item} />
-                        ))}
-                    </View>
-                    <Dropdown
-                        options={["Saree", "Suits", "Toy gun", "Crockery", "Pants", "Shirts"]}
-                        selectedValue={""}
-                        barBorderColor={{ borderColor: "black", paddingVertical: 10 }}
-                        alreadySelectedOptions={selectedTags}
-                        onValueChange={item => {
-                            if (!selectedTags.includes(item)) {
-                                setSelectedTags([...selectedTags, item]);
+                            style={styles.profileImage}
+                            source={
+                                profileImage && !profileImage?.path
+                                    ? { uri: profileImage }
+                                    : !profileImage && !profileImage?.path
+                                        ? Images?.person
+                                        : { uri: profileImage.path }
                             }
-                        }}
-                    />
-                </View>
+                        />
+                        <Pressable onPress={openGallery}>
+                            <FastImage
+                                source={Images?.EditForProductBlock}
+                                style={styles.editIcon}
+                                resizeMode="contain"
+                            />
+                        </Pressable>
+                    </View>
 
-                <View style={styles.flexSpacer} />
+                    <View style={[styles.inputContainer, {}]}>
+                        <Text style={styles.inputLabel}>Name</Text>
+                        <View style={styles?.dropdown}>
+                            <TextInput
+                                value={name}
+                                style={{ fontFamily: AppFonts.Regular, fontSize: 16 }}
+                                placeholder="name"
+                                placeholderTextColor={Colors?.DarkText}
+                                onChangeText={setName}
+                            />
+                        </View>
+                    </View>
 
-                <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} />
+                    <View style={[styles.inputContainer, {}]}>
+                        <Text style={styles.inputLabel}>Select Your Age</Text>
+                        <Dropdown
+                            options={ageOptions}
+                            selectedValue={selected}
+                            onValueChange={setSelected}
+                        />
+                    </View>
+
+                    <View style={styles.dropdownWrapper}>
+                        <Text style={styles.inputLabel}>Interest</Text>
+                        <View style={styles.tagsContainer}>
+                            {selectedTags?.map((item, index) => (
+                                <RenderItemForSelectedProduct key={index} item={item} />
+                            ))}
+                        </View>
+                        <Dropdown
+                            options={["Saree", "Suits", "Toy gun", "Crockery", "Pants", "Shirts"]}
+                            selectedValue={""}
+                            alreadySelectedOptions={selectedTags}
+                            onValueChange={(item) => {
+                                let oldItems: any = [...selectedTags, item];
+                                setSelectedTags(oldItems);
+                            }}
+                            removeItem={(item: any) => {
+                                const newArr = selectedTags.filter((items: any) => items !== item);
+                                setSelectedTags(newArr)
+                            }}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Choose your gender</Text>
+                        <Dropdown
+                            options={['Female', 'Male']}
+                            selectedValue={selectedGender}
+                            onValueChange={setSelectedGender}
+                        />
+                    </View>
+
+                    <View style={[styles.dropdownWrapper, {}]}>
+                        <Text style={styles.inputLabel}>Select Your state</Text>
+                        <Dropdown
+                            options={states}
+                            selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ""}
+                            onValueChange={handleStateChange}
+                        />
+                    </View>
+
+                    <View style={[styles.dropdownWrapper]}>
+                        <Text style={styles.inputLabel}>Select Your City</Text>
+                        <Dropdown
+                            label="Select City"
+                            options={cities}
+                            selectedValue={selectedCity}
+                            onValueChange={setSelectedCity}
+                        />
+                    </View>
+
+                    <View style={styles.flexSpacer} />
+
+                    <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} />
+
+                     <BottomButton btnStyle={[styles.bottomButton, {marginTop:0}]} title={"Delete"} clickable={ClickedOnDelete} />
+                </ScrollView>
             </SafeAreaView>
         </>
     );
@@ -295,6 +353,9 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 1,
         borderColor: "grey"
+    },
+    scrollContainer: {
+        flex: 1
     },
     editIcon: {
         width: 30,
@@ -342,5 +403,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: wp(1),
         color: Colors?.DarkText
+    },
+    inputContainer: {
+        width: width * 0.9,
+        alignSelf: 'center',
+        marginTop: hp(1)
+    },
+    dropdown: {
+        padding: 12,
+        borderWidth: 1,
+        borderColor: Colors?.buttonPrimaryColor,
+        borderRadius: 8,
     },
 });

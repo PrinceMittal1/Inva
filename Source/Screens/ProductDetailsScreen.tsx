@@ -11,10 +11,10 @@ import Images from "../Keys/Images";
 import AppFonts from "../Functions/Fonts";
 import { useDispatch, useSelector } from "react-redux";
 import CommentModal from "../Components/Comments/CommentModal";
+import { gettingProductDetail, toggleLike, toggleSaved } from "../Apis";
 
 const ProductDetail = () => {
     const insets = useSafeAreaInsets();
-    const fireUtils = useFireStoreUtil();
     const styles = useStyles();
     const route: any = useRoute();
     const [detail, setDetail] = useState<any>({});
@@ -28,8 +28,8 @@ const ProductDetail = () => {
 
     const getProductDetail = async () => {
         setLoader(true)
-        const res: any = await fireUtils.getProduct(route?.params?.productId, user_id);
-        setDetail(res)
+        const res: any = await gettingProductDetail({ user_id: user_id, product_id: route?.params?.productId })
+        setDetail(res?.data?.product)
         setLoader(false)
     }
 
@@ -45,26 +45,24 @@ const ProductDetail = () => {
     };
 
     const formatingDate = (timestamp: any) => {
-        const date = new Date(timestamp * 1000);
-        const options: any = { day: '2-digit', month: 'short', year: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
+        const date = new Date(timestamp);
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "2-digit",
+            })
+            .replace(/\//g, "-");
     };
 
     const LikingProduct = async () => {
         setDetail(prev => ({
             ...prev,
-            isLiked: !prev.isLiked,
-            likeCount: prev.isLiked ? prev.likeCount - 1 : prev.likeCount + 1
+            liked_me: !prev.liked_me,
+            likeCount: prev.liked_me ? prev.likeCount - 1 : prev.likeCount + 1
         }));
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.likingCard(route?.params?.productId, user_id);
-        if (result) {
-            setDetail(prev => ({
-                ...prev,
-                isLiked: result.state,
-                likeCount: result.likeCount
-            }));
-        }
+        let product_id = detail?._id
+        await toggleLike({ product_id, user_id })
     }
 
     const onCommentPress = () => {
@@ -75,14 +73,14 @@ const ProductDetail = () => {
     }
 
     const toggleSavingCollection = async () => {
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.toggleSavingInWishlist(user_id, route?.params?.productId);
-        if (result) {
-            setDetail({ ...detail, saved: true })
-        } else {
-            setDetail({ ...detail, saved: false })
+        let product_id = detail?._id
+        let res = await toggleSaved({ product_id, user_id })
+        if (res?.status == 200) {
+            setDetail(prev => ({
+                ...prev,
+                saved: !prev.saved
+            }));
         }
-        console.log("res in screen is --- ", result)
     }
 
     const onSharePress = () => {
@@ -181,7 +179,7 @@ const ProductDetail = () => {
 
                             <Pressable onPress={LikingProduct} style={styles.bottomIconMargin}>
                                 <Image
-                                    source={detail?.isLiked ? Images.filledHeart : Images.Heart}
+                                    source={detail?.liked_me ? Images.filledHeart : Images.Heart}
                                     style={styles.bottomIcon}
                                     resizeMode="contain"
                                 />

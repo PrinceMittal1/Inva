@@ -30,7 +30,7 @@ const Chat = () => {
     })
     const [chatRoomRef, setChatRoomRef] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
-    const { user_id } = useSelector((state: any) => state.userData);
+    const { user_id, userData } = useSelector((state: any) => state.userData);
     const [lastDoc, setLastDoc] = useState(null);
     const [loadingMore, setLoadingMore] = useState(false);
     const firstPageLoaded = useRef(false);
@@ -40,13 +40,15 @@ const Chat = () => {
     const insets = useSafeAreaInsets();
 
     const initalisingChat = async () => {
-        const result = await fireUtils?.createOrGetChatRoom(route?.params?.sellerId, route?.params?.user_id);
+        const result = await fireUtils?.createOrGetChatRoom(route?.params?.sellerId, route?.params?.sellerDisplayName,route?.params?.seller_profile, route?.params?.user_id, userData?.name, userData?.profile_picture);
         setChatRoomRef(result);
     }
 
     useEffect(() => {
         initalisingChat();
     }, [])
+
+    // console.log("detail on tha page si====== ", route?.params?.seller_profile)
 
     useEffect(() => {
         if (!chatRoomRef) return;
@@ -241,7 +243,7 @@ const Chat = () => {
             >
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                     <>
-                        <Header title={'Search'} showbackIcon={true} />
+                        <Header title={route?.params?.sellerDisplayName} showbackIcon={true} />
 
                         <FlatList
                             style={{ flex: 1 }}
