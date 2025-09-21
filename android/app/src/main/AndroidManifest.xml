@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" 
-    package="com.inva"
+    package="com.invaID"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -67,19 +67,17 @@
         
       </activity>
       
-      <!-- AppsFlyer Install Referrer Service -->
-      <service 
+      <!-- <service 
           android:name="com.appsflyer.internal.InstallReferrerService"
           android:exported="true">
           <intent-filter>
               <action android:name="com.android.vending.INSTALL_REFERRER" />
           </intent-filter>
-      </service>
+      </service> -->
       
-      <!-- AppsFlyer Background Service -->
-      <service 
+      <!-- <service 
           android:name="com.appsflyer.internal.af" 
-          android:exported="true"/>
+          android:exported="true"/> -->
       
     </application>
 </manifest>

@@ -1,4 +1,4 @@
-package com.inva
+package com.invaID
 
 import android.app.Application
 import com.facebook.react.PackageList

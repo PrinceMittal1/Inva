@@ -16,6 +16,8 @@ import ProductDetail from "../Screens/ProductDetailsScreen";
 import VerificationScreen from "../Screens/VerificationScreen";
 import { setupDeepLinkListeners } from "../Functions/AppsFlyerConfig";
 import { useNavigation } from "@react-navigation/native";
+import Terms from "../Screens/Terms";
+import PrivacyPolicy from "../Screens/PrivacyPolicy";
 
 const MainStack = () => {
     const Stack = createNativeStackNavigator();
@@ -25,7 +27,7 @@ const MainStack = () => {
     useEffect(() => {
         setupDeepLinkListeners(navigation);
         return () => {
-            
+
         };
     }, [navigation]);
     return (
@@ -40,6 +42,8 @@ const MainStack = () => {
                 <Stack.Screen name={keys?.Chat} component={Chat} />
                 <Stack.Screen name={keys?.productDetail} component={ProductDetail} />
                 <Stack.Screen name={keys.BottomBar} component={BottomTabs} />
+                <Stack.Screen name={keys?.PrivacyPolicy} component={PrivacyPolicy} />
+                <Stack.Screen name={keys?.Terms} component={Terms} />
             </Stack.Navigator>
             {loading && <Loader />}</>
     )

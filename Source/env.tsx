@@ -1,6 +1,9 @@
 import { Platform } from "react-native"
 
 
-const apiUrl = Platform.OS =='ios' ? 'http://52.66.138.60:3000/api/'  : 'http://52.66.138.60:3000/api/'
+const apiUrl = Platform.OS =='ios' ? 'https://api.inva.net.in/api/'  : 'https://api.inva.net.in/api/'
 
+// http://127.0.0.1:3000/
+// http://52.66.138.60:3000/api/
+// https://api.inva.net.in/api/content/inva/privacy_policy
 export {apiUrl}

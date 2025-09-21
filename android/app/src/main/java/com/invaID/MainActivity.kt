@@ -1,4 +1,4 @@
-package com.inva
+package com.invaID
 
 import android.content.Intent
 import android.os.Bundle
@@ -15,11 +15,11 @@ class MainActivity : ReactActivity() {
         handleIntent(intent)
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // Set the new intent and handle deep link
         setIntent(intent)
-        intent?.let { handleIntent(it) }
+        handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent) {

@@ -11,7 +11,9 @@ const AppRoutes : any = {
     ChatListing : "ChatListing",
     Chat : "Chat",
     productDetail : "productDetail",
-    VerificationScreen : "VerificationScreen"
+    VerificationScreen : "VerificationScreen",
+    Terms : "Terms",
+    PrivacyPolicy : "PrivacyPolicy"
 }
 
 export default AppRoutes

@@ -139,6 +139,18 @@ const Login = () => {
                         <Text style={styles.googleButtonText}>Continue with Google</Text>
                     </Pressable>
                 </View>
+
+                <View style={{position:'absolute', bottom:wp(10), alignSelf:'center', flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
+                    <Pressable onPress={()=>navigation.navigate(AppRoutes?.Terms)}>
+                        <Text style={{textDecorationLine:'underline', textDecorationColor:'black', fontSize:14, fontFamily:AppFonts.Regular}}>Term & Condition</Text>
+                    </Pressable>
+
+                    <Text style={{fontSize:14, fontFamily:AppFonts.Regular, marginHorizontal:wp(1.5)}}>&</Text>
+
+                    <Pressable onPress={()=>navigation.navigate(AppRoutes?.PrivacyPolicy)}>
+                        <Text style={{textDecorationLine:'underline', textDecorationColor:'black', fontSize:14, fontFamily:AppFonts.Regular}}>Privacy Policy</Text>
+                    </Pressable>
+                </View>
             </SafeAreaView>
         </>
     );

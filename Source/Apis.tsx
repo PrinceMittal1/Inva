@@ -20,8 +20,11 @@ export const creatingUserApi = async (payload: any) => {
         },
       }
     );
+    console.log("response is ----- -", response)
     return response;
+
   } catch (e: any) {
+    console.log("response is ----- -", e)
     if (axios.isAxiosError(e)) {
       return [e.response?.status, e.response?.data];
     } else {
@@ -105,7 +108,7 @@ export const followSeller = async (user_id: string, seller_id: string) => {
   }
 };
 
-export const gettingProductDetail = async(payload: any) =>{
+export const gettingProductDetail = async (payload: any) => {
   try {
     const response = await axios.get(
       `${apiUrl}product/detail`,
@@ -121,7 +124,7 @@ export const gettingProductDetail = async(payload: any) =>{
 }
 
 
-export const fetchingSellerProfile = async(payload: any) =>{
+export const fetchingSellerProfile = async (payload: any) => {
   try {
     const response = await axios.get(
       `${apiUrl}seller/profile`,
@@ -152,7 +155,7 @@ export const getProductsForSellerPage = async (payload: any) => {
 }
 
 
-export const handleItemViewed = async(product_id: string) =>{
+export const handleItemViewed = async (product_id: string) => {
   try {
     const response = await axios.post(`${apiUrl}product/viewed`, {
       product_id,
@@ -205,10 +208,39 @@ export const deleteUser = async (payload: any) => {
   try {
     const response = await axios.delete(`${apiUrl}users/delete`, {
       headers: { 'Content-Type': 'application/json' },
-      data: payload   // <--- important, otherwise req.body will be undefined
+      data: payload
     });
     return response;
   } catch (error: any) {
     console.log("response is ----- delete ", error);
+  }
+};
+
+
+export const gettingPrivacyPolicy = async () => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}content/inva/privacy_policy`,
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- profile  ", error)
+  }
+};
+
+export const gettingTerms = async () => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}content/inva/terms_conditions`,
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- profile  ", error)
   }
 };

@@ -110,10 +110,6 @@ const Profile = () => {
             setSelectedTags(res?.data?.data?.interest);
             setSelectedCity(res?.data?.data?.city);
             setLoader(false)
-            // const indianStates = State.getStatesOfCountry("IN");
-            // setStates(indianStates.map(s => `${s.name} (${s.isoCode})`));
-            // const citiesList = City.getCitiesOfState("IN", res?.data?.data?.stateCode ?? "PB");
-            // setCities(citiesList.map(c => c.name));
         } catch (error) {
         } finally {
             setLoader(false)
