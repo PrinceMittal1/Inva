@@ -18,11 +18,29 @@ import { setupDeepLinkListeners } from "../Functions/AppsFlyerConfig";
 import { useNavigation } from "@react-navigation/native";
 import Terms from "../Screens/Terms";
 import PrivacyPolicy from "../Screens/PrivacyPolicy";
+import { logEvent } from "../Functions/EventFunction";
 
 const MainStack = () => {
     const Stack = createNativeStackNavigator();
+    const { userData, user_id } = useSelector((state: any) => state.userData);
     const navigation = useNavigation();
     const { loading } = useSelector((state: any) => state?.tempData)
+
+
+
+    setTimeout(() => {
+        let obj: any = {}
+        if (user_id) { obj.user_id = user_id };
+        if (userData?.age) { obj.age = Number(userData?.age) }
+        if (userData?.city) { obj.city = userData.state.toString().slice(0, 39) }
+        if (userData?.state) { obj.state = userData.state.toString().slice(0, 39) }
+        if (userData?.gender) { obj.gender = userData.gender }
+        if (userData?.interest) {
+            const result = userData?.interest.join("_");
+            obj.interests = result.toString().slice(0, 39)
+        }
+        logEvent('CaptureTime_InvaCst', obj)
+    }, 15000);
 
     useEffect(() => {
         setupDeepLinkListeners(navigation);

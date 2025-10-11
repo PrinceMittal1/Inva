@@ -12,7 +12,8 @@ import AppFonts from "../Functions/Fonts";
 import Colors from "../Keys/colors";
 import FastImage from "@d11/react-native-fast-image";
 import { creatingUserApi } from "../Apis";
-import { FirebaseApp, getApps, initializeApp } from "firebase/app"; 
+import { FirebaseApp, getApps, initializeApp } from "firebase/app";
+import { logEvent } from "../Functions/EventFunction";
 
 const { width } = Dimensions.get('window');
 
@@ -41,8 +42,17 @@ const Login = () => {
                 confimration: confirmation,
                 phoneNumber: numberForLogin
             })
+            logEvent("Login_InvaCst", {
+                event_action: 'login_with_phone',
+                successStatus: true,
+                phoneNumber: numberForLogin
+            })
         } catch (error) {
-            console.log('Phone Sign-In Error:', error);
+            logEvent("Login_InvaCst", {
+                event_action: 'login_with_phone',
+                successStatus: false,
+                phoneNumber: numberForLogin
+            })
         }
         setLoader(false)
     };
@@ -63,19 +73,27 @@ const Login = () => {
                 const additionalUserInfo: any = res.additionalUserInfo ?? {};
                 if (additionalUserInfo?.profile?.email) {
                     let data = {
-                        profile_picture : additionalUserInfo?.profile?.picture,
-                        name : additionalUserInfo?.profile?.name,
-                        email : additionalUserInfo?.profile?.email
+                        profile_picture: additionalUserInfo?.profile?.picture,
+                        name: additionalUserInfo?.profile?.name,
+                        email: additionalUserInfo?.profile?.email
                     }
-                    const res : any = await creatingUserApi(data)
+                    const res: any = await creatingUserApi(data)
                     if (res?.status == 200) {
                         dispatch(setUserId(res?.data?.user?._id));
                         navigation.navigate(AppRoutes?.ScreenForUserDetail);
+                        logEvent("Login_InvaCst", {
+                            event_action: 'login_with_google',
+                            successStatus: true
+                        })
                     }
                 }
             }
         } catch (error) {
-            // console.log("error while logging out is ------ ", error)
+            logEvent("Login_InvaCst", {
+                event_action: 'login_with_google',
+                successStatus: false
+            })
+            console.log("error while logging out is ------ ", error)
         }
         finally {
             setLoader(false)
@@ -140,15 +158,15 @@ const Login = () => {
                     </Pressable>
                 </View>
 
-                <View style={{position:'absolute', bottom:wp(10), alignSelf:'center', flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
-                    <Pressable onPress={()=>navigation.navigate(AppRoutes?.Terms)}>
-                        <Text style={{textDecorationLine:'underline', textDecorationColor:'black', fontSize:14, fontFamily:AppFonts.Regular}}>Term & Condition</Text>
+                <View style={{ position: 'absolute', bottom: wp(10), alignSelf: 'center', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Pressable onPress={() => navigation.navigate(AppRoutes?.Terms)}>
+                        <Text style={{ textDecorationLine: 'underline', textDecorationColor: 'black', fontSize: 14, fontFamily: AppFonts.Regular }}>Term & Condition</Text>
                     </Pressable>
 
-                    <Text style={{fontSize:14, fontFamily:AppFonts.Regular, marginHorizontal:wp(1.5)}}>&</Text>
+                    <Text style={{ fontSize: 14, fontFamily: AppFonts.Regular, marginHorizontal: wp(1.5) }}>&</Text>
 
-                    <Pressable onPress={()=>navigation.navigate(AppRoutes?.PrivacyPolicy)}>
-                        <Text style={{textDecorationLine:'underline', textDecorationColor:'black', fontSize:14, fontFamily:AppFonts.Regular}}>Privacy Policy</Text>
+                    <Pressable onPress={() => navigation.navigate(AppRoutes?.PrivacyPolicy)}>
+                        <Text style={{ textDecorationLine: 'underline', textDecorationColor: 'black', fontSize: 14, fontFamily: AppFonts.Regular }}>Privacy Policy</Text>
                     </Pressable>
                 </View>
             </SafeAreaView>

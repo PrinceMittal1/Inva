@@ -1,21 +1,13 @@
 import React, { useEffect, useRef, useState } from "react"
 import { ActivityIndicator, Dimensions, FlatList, Platform, Pressable, SafeAreaView, StatusBar, Text, View } from "react-native"
 import Header from "../Components/Header"
-import ImagePickerModal from "../Components/ImagePickerModal"
-import storage from '@react-native-firebase/storage';
-import RNFS, { stat } from 'react-native-fs';
 import { useDispatch, useSelector } from "react-redux";
-import { setUserId } from "../Redux/Reducers/userData";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import AppRoutes from "../Routes/AppRoutes";
-import useFireStoreUtil from "../Functions/FireStoreUtils";
 import ProductBlock from "../Components/ProductBlock";
 import Images from "../Keys/Images";
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
 import { getProductsForHome, handleItemViewed } from "../Apis";
 import CommentModal from "../Components/Comments/CommentModal";
-import Colors from "../Keys/colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get('window')
@@ -48,13 +40,14 @@ const Home = () => {
 
         viewableItems.forEach(({ item }) => {
             if (!visibleItemsTimers.current[item._id]) {
-                visibleItemsTimers.current[item._id] = setTimeout(async() => {
+                visibleItemsTimers.current[item._id] = setTimeout(async () => {
                     await handleItemViewed(item._id);
                     delete visibleItemsTimers.current[item._id];
                 }, 3500);
             }
         });
     });
+
 
     let fetchingProducts = async () => {
         setLoader(true)
@@ -130,7 +123,7 @@ const Home = () => {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', paddingTop: insets.top, paddingBottom:insets.bottom }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', paddingTop: insets.top, paddingBottom: insets.bottom }}>
                 <Header title={'Home'}
                     showbackIcon={false}
                     rightIcon={Images?.savedFilled}

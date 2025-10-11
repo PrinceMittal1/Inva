@@ -8,14 +8,14 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 import messaging from '@react-native-firebase/messaging';
 import MainStack from './Source/Navigation/Stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { store, persistor } from './Source/Redux/store';
 import { PersistGate } from "redux-persist/integration/react";
 import appsFlyer from 'react-native-appsflyer';
-import notifee, {AndroidImportance} from '@notifee/react-native';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 import { initAppsFlyer } from './Source/Functions/AppsFlyerConfig';
 
 async function requestNotificationPermission() {
@@ -29,6 +29,14 @@ async function requestNotificationPermission() {
 }
 
 function App(): React.JSX.Element {
+  const linking = {
+    prefixes: ["myapp://", "https://api.inva.net.in"],
+    config: {
+      screens: {
+        productDetail: "product/:id",
+      },
+    },
+  };
 
   useEffect(() => {
     (async () => {
@@ -56,7 +64,7 @@ function App(): React.JSX.Element {
         await notifee.displayNotification({
           title: remoteMessage.notification?.title ?? 'Message',
           body: remoteMessage.notification?.body ?? '',
-          android: {channelId: 'default', smallIcon: 'ic_launcher'},
+          android: { channelId: 'default', smallIcon: 'ic_launcher' },
         });
       });
 
@@ -74,7 +82,7 @@ function App(): React.JSX.Element {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <MainStack />
         </NavigationContainer>
       </PersistGate>
