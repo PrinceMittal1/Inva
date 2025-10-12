@@ -90,7 +90,6 @@ const WishList = () => {
                 showFollowButton={true}
                 statusChangingForFollow={statusChangingForFollow}
                 showShopName={true}
-                onSharePress={() => { }}
                 onSavePress={savingItemInWishlist}
                 onComparisonPress={() => { }}
                 onCommentPress={() => {

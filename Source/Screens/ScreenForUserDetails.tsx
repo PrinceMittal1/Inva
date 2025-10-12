@@ -317,9 +317,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors?.PrimaryBackground,
     },
-    dropdown: {
-        padding: 12,
+     dropdown: {
+        paddingHorizontal: 12,
+        height:wp(12),
         borderWidth: 1,
+        justifyContent:'center',
         borderColor: Colors?.buttonPrimaryColor,
         borderRadius: 8,
     },

@@ -4,6 +4,7 @@ import {
     Image,
     Platform,
     Pressable,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -32,7 +33,6 @@ const ProductBlock = ({
     showFollowButton = true,
     showShopName = true,
     onCommentPress,
-    onSharePress,
     onSavePress,
     statusChangingForFollow
 }: any) => {
@@ -48,6 +48,28 @@ const ProductBlock = ({
         if (num < 1_000_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
         return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
     };
+    
+    const onSharePress = async() =>{
+        try {
+      const result = await Share.share({
+        message:
+          `Hey! 👋 Check out this product on Inva App — ❤️\nDownload now: https://invaid.onelink.me/RukT/us6cjqc2?product_id=${blockItem?._id}`,
+        title: 'Invite to Inva 💫',
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Shared via:', result.activityType);
+        } else {
+          console.log('Shared successfully');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+    }
 
     const formatingDate = (timestamp: any) => {
         const date = new Date(timestamp);

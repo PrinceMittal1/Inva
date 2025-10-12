@@ -1,18 +1,19 @@
 import appsFlyer from 'react-native-appsflyer';
+import AppRoutes from '../Routes/AppRoutes';
+import keys from "../Routes/AppRoutes";
 
-const APPSFLYER_DEV_KEY = 'YOUR_APPSFLYER_DEV_KEY';
-const APPSFLYER_APP_ID = 'YOUR_APP_ID_IOS'; // Only for iOS
+const APPSFLYER_APP_ID = 'com.invaID';
 
 // Initialize AppsFlyer
 export const initAppsFlyer = () => {
   appsFlyer.initSdk(
     {
       devKey: 'hf74naWswXcY83UHeUf467',
-      isDebug: false,
-      appId: APPSFLYER_APP_ID, // iOS only
-      onInstallConversionDataListener: true, // Optional for deferred deep linking
-      onDeepLinkListener: true, // Optional for deep linking
-      timeToWaitForATTUserAuthorization: 10 // iOS only
+      isDebug: true,
+      appId: APPSFLYER_APP_ID,
+      onInstallConversionDataListener: true,
+      onDeepLinkListener: true,
+      timeToWaitForATTUserAuthorization: 10
     },
     (result) => {
       console.log('AppsFlyer SDK initialized successfully', result);
@@ -45,17 +46,14 @@ export const setupDeepLinkListeners = (navigation) => {
 };
 
 // Handle deep link data and navigate accordingly
-const handleDeepLinkData = (data, navigation, isDeferred) => {
-  console.log('Handling deep link data:', data);
-  
+const handleDeepLinkData = (data, navigation, isDeferred) => {  
   // Extract parameters from deep link
   const productId = data.product_id || data.pid;
   const category = data.category || data.cat;
   const campaign = data.campaign || data.c;
-  
   if (productId) {
-    // Navigate to product screen
-    navigation.navigate('Product', { 
+      console.log('Handling deep link data:--------- productId', productId);
+    navigation.navigate(keys?.productDetail, { 
       productId,
       isFromDeepLink: true,
       isDeferred

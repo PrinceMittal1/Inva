@@ -29,7 +29,6 @@ export const logEvent = async (
     );
 
     await analytics().logEvent(eventName, filteredParams);
-    console.log(`✅ Event logged: ${eventName}`, filteredParams);
   } catch (error) {
     console.error("❌ Analytics log error:", error);
   }

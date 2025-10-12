@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native"
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import { useRoute } from "@react-navigation/native";
 import { wp } from "../Keys/dimension";
@@ -83,8 +83,27 @@ const ProductDetail = () => {
         }
     }
 
-    const onSharePress = () => {
 
+    const onSharePress = async() => {
+     try {
+      const result = await Share.share({
+        message:
+          `Hey! 👋 Check out this product on Inva App — ❤️\nDownload now: https://invaid.onelink.me/RukT/us6cjqc2?product_id=${detail?._id}`,
+        title: 'Invite to Inva 💫',
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Shared via:', result.activityType);
+        } else {
+          console.log('Shared successfully');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
     }
 
 

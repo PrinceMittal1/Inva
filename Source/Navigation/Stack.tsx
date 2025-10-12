@@ -14,11 +14,12 @@ import WishList from "../Screens/WishList";
 import Chat from "../Screens/Chat";
 import ProductDetail from "../Screens/ProductDetailsScreen";
 import VerificationScreen from "../Screens/VerificationScreen";
-import { setupDeepLinkListeners } from "../Functions/AppsFlyerConfig";
+import { initAppsFlyer, setupDeepLinkListeners } from "../Functions/AppsFlyerConfig";
 import { useNavigation } from "@react-navigation/native";
 import Terms from "../Screens/Terms";
 import PrivacyPolicy from "../Screens/PrivacyPolicy";
 import { logEvent } from "../Functions/EventFunction";
+import EditProfile from "../Screens/EditProfile";
 
 const MainStack = () => {
     const Stack = createNativeStackNavigator();
@@ -43,10 +44,8 @@ const MainStack = () => {
     }, 15000);
 
     useEffect(() => {
+        initAppsFlyer();
         setupDeepLinkListeners(navigation);
-        return () => {
-
-        };
     }, [navigation]);
     return (
         <>
@@ -56,6 +55,7 @@ const MainStack = () => {
                 <Stack.Screen name={keys.VerificationScreen} component={VerificationScreen} />
                 <Stack.Screen name={keys.ScreenForUserDetail} component={ScreenForUserDetails} />
                 <Stack.Screen name={keys.SellerProfile} component={SellerProfile} />
+                <Stack.Screen name={keys.EditProfile} component={EditProfile} />
                 <Stack.Screen name={keys.WishList} component={WishList} />
                 <Stack.Screen name={keys?.Chat} component={Chat} />
                 <Stack.Screen name={keys?.productDetail} component={ProductDetail} />

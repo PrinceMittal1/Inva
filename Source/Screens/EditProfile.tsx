@@ -38,7 +38,7 @@ import LogoutConfirmation from "../Modal/LogoutConfirmation";
 
 const { width, height } = Dimensions.get("window");
 
-const Profile = () => {
+const EditProfile = () => {
     const [profileImage, setProfileImage] = useState<any>(null);
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState("Kharar");
@@ -217,23 +217,6 @@ const Profile = () => {
         }
     }
 
-    const RenderItem = ({ item, onPress }: any) => {
-        console.log("data in render itme -- ", item, onPress)
-        return (
-            <Pressable
-                style={styles.menuItem}
-                onPress={onPress ? onPress : () => navigation.navigate(item?.navigationTitle)}
-            >
-                <Text>{item?.title}</Text>
-                <FastImage
-                    source={Images?.upArrow}
-                    style={styles.arrowIcon}
-                    tintColor={Colors?.buttonPrimaryColor}
-                    resizeMode="contain"
-                />
-            </Pressable>
-        )
-    }
 
 
     return (
@@ -254,7 +237,7 @@ const Profile = () => {
                 </View>
             )}
             <View style={{ marginTop: insets.top, flex: 1 }}>
-                <Header title={"Profile"} rightIcon={Images?.logout} rightClick={loggingOut} />
+                <Header title={"Edit Profile"} rightIcon={Images?.logout} rightClick={loggingOut} />
 
                 <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} style={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
 
@@ -269,13 +252,17 @@ const Profile = () => {
                                         : { uri: profileImage.path }
                             }
                         />
+                        <Pressable onPress={openGallery}>
+                            <FastImage
+                                source={Images?.EditForProductBlock}
+                                style={styles.editIcon}
+                                resizeMode="contain"
+                            />
+                        </Pressable>
                     </View>
 
-                    <View style={{ alignSelf: 'center' }}>
-                        <Text style={styles.profileName}>{name}</Text>
-                    </View>
 
-                    {/* <View style={[styles.inputContainer, {}]}>
+                    <View style={[styles.inputContainer, {}]}>
                         <Text style={styles.inputLabel}>Name</Text>
                         <View style={styles?.dropdown}>
                             <TextInput
@@ -345,37 +332,13 @@ const Profile = () => {
                             selectedValue={selectedCity}
                             onValueChange={setSelectedCity}
                         />
-                    </View> */}
-
-                    {/* <View style={styles.flexSpacer} />
-
-                    <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} /> */}
-
-
-                    <View style={styles.menuWrapper}>
-                        <RenderItem item={{ title: 'Edit Profile', navigationTitle: AppRoutes?.EditProfile }} />
-                        <RenderItem item={{ title: 'Terms', navigationTitle: AppRoutes?.Terms }} />
-                        <RenderItem item={{ title: 'Privacy Policy', navigationTitle: AppRoutes?.PrivacyPolicy }} />
-                        <RenderItem item={{ title: 'Logout', navigationTitle: AppRoutes?.Terms }} onPress={() => {
-                            setShowLogoutPopUp(true)
-                        }} />
-                        <RenderItem item={{ title: 'Delete Account' }} onPress={() => {
-                            setShowDeleteModal(true)
-                        }} />
                     </View>
 
-                    {showDeleteModal &&
-                        <DeleteConfirmation visible={showDeleteModal} confimation={onDeleting} onClosePress={() => setShowDeleteModal(false)} message={"Are you sure you want to delete this account"} />
-                    }
-                    {
-                        showLogoutPopUp &&
-                        <LogoutConfirmation 
-                        confimation={loggingOut} 
-                        onClosePress={()=>{
-                            setShowLogoutPopUp(false)
-                        }}
-                        />
-                    }
+                    <View style={styles.flexSpacer} />
+
+                    <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} />
+
+
 
                 </KeyboardAwareScrollView>
             </View>
@@ -383,7 +346,7 @@ const Profile = () => {
     );
 };
 
-export default Profile;
+export default EditProfile;
 
 const styles = StyleSheet.create({
     safeArea: {

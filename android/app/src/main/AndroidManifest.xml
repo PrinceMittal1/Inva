@@ -28,12 +28,12 @@
             android:exported="true">
 
             <!-- Launcher -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Universal Link (HTTPS) -->
+            <!-- Universal Link (your own domain, if you have one) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -44,7 +44,7 @@
                     android:pathPrefix="/product" />
             </intent-filter>
 
-            <!-- Custom Scheme -->
+            <!-- Custom Scheme (for internal deep links like myapp://product/123) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -52,19 +52,23 @@
                 <data android:scheme="myapp" android:host="product" />
             </intent-filter>
 
-            <!-- Optional: AppsFlyer OneLink (HTTPS) -->
+            <!-- ✅ AppsFlyer OneLink (use both https + http) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="inva.onelink.me" />
+                <data
+                    android:scheme="https"
+                    android:host="invaid.onelink.me" />
             </intent-filter>
 
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="inva.onelink.me" />
+                <data
+                    android:scheme="http"
+                    android:host="invaid.onelink.me" />
             </intent-filter>
 
         </activity>

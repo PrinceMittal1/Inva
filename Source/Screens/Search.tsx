@@ -93,7 +93,6 @@ const Search = () => {
         return (
             <ProductBlock item={item}
                 statusChangingForFollow={statusChangingForFollow}
-                onSharePress={() => { }}
                 showShopName={true}
                 onSavePress={savingItemInWishlist}
                 onCommentPress={() => {

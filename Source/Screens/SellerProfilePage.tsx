@@ -118,7 +118,6 @@ const SellerProfile = () => {
                 showFollowButton={true}
                 statusChangingForFollow={statusChangingForFollow}
                 showShopName={false}
-                onSharePress={() => { }}
                 onSavePress={savingItemInWishlist}
                 onComparisonPress={() => { }}
                 onCommentPress={() => {

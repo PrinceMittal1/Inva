@@ -89,7 +89,6 @@ const Home = () => {
         return (
             <ProductBlock item={item}
                 statusChangingForFollow={statusChangingForFollow}
-                onSharePress={() => { }}
                 showShopName={true}
                 onSavePress={savingItemInWishlist}
                 onCommentPress={() => {
@@ -123,7 +122,7 @@ const Home = () => {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', paddingTop: insets.top, paddingBottom: insets.bottom }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', paddingTop: insets.top }}>
                 <Header title={'Home'}
                     showbackIcon={false}
                     rightIcon={Images?.savedFilled}

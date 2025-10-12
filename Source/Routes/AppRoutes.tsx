@@ -13,7 +13,8 @@ const AppRoutes : any = {
     productDetail : "productDetail",
     VerificationScreen : "VerificationScreen",
     Terms : "Terms",
-    PrivacyPolicy : "PrivacyPolicy"
+    PrivacyPolicy : "PrivacyPolicy",
+    EditProfile : "EditProfile"
 }
 
 export default AppRoutes

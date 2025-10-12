@@ -72,10 +72,6 @@ function App(): React.JSX.Element {
     })();
   }, []);
 
-  useEffect(() => {
-    // Initialize AppsFlyer
-    initAppsFlyer();
-  }, []);
 
 
 
