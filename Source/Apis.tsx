@@ -24,7 +24,7 @@ export const creatingUserApi = async (payload: any) => {
     return response;
 
   } catch (e: any) {
-    console.log("response is ----- -", e)
+    console.log("response is ----- - + " , e)
     if (axios.isAxiosError(e)) {
       return [e.response?.status, e.response?.data];
     } else {

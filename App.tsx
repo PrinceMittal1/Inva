@@ -1,24 +1,25 @@
+// App.tsx
 import '@react-native-firebase/app';
 import React, { useEffect } from 'react';
-import type { PropsWithChildren } from 'react';
 import {
   Alert,
   PermissionsAndroid,
   Platform,
   StyleSheet,
-  View,
 } from 'react-native';
-import { Provider, useSelector } from "react-redux";
-import messaging from '@react-native-firebase/messaging';
-import MainStack from './Source/Navigation/Stack';
+import { Provider } from "react-redux";
+import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
+import MainStack from './Source/Navigation/Stack'; // adjust path if needed
 import { NavigationContainer } from '@react-navigation/native';
 import { store, persistor } from './Source/Redux/store';
 import { PersistGate } from "redux-persist/integration/react";
-import appsFlyer from 'react-native-appsflyer';
-import notifee, { AndroidImportance } from '@notifee/react-native';
-import { initAppsFlyer } from './Source/Functions/AppsFlyerConfig';
+import notifee, { AndroidImportance, EventType as NotifeeEventType } from '@notifee/react-native';
+import { initAppsFlyer } from './Source/Functions/AppsFlyerConfig'; // optional
+import { navigationRef, navigate } from './NavigationRef'; // adjust path if needed
+import AppRoutes from './Source/Routes/AppRoutes';
 
-async function requestNotificationPermission() {
+// Request Android 13+ notification permission
+async function requestNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'android' && Platform.Version >= 33) {
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
@@ -28,57 +29,159 @@ async function requestNotificationPermission() {
   return true;
 }
 
+// Show a Notifee local notification for foreground messages (attach data)
+async function handleForegroundMessage(remoteMessage: FirebaseMessagingTypes.RemoteMessage) {
+  try {
+    await notifee.displayNotification({
+      title: remoteMessage.notification?.title ?? 'New Notification',
+      body: remoteMessage.notification?.body ?? '',
+      android: {
+        channelId: 'default',
+        smallIcon: 'ic_launcher', // ensure this icon exists in android resources
+        pressAction: { id: 'default' },
+      },
+      data: remoteMessage.data ?? {}
+    });
+  } catch (err) {
+    console.warn('Error showing foreground notification', err);
+  }
+}
+
+// Normalize incoming data keys and navigate accordingly
+function handleNotificationNavigationFromData(data: { [k: string]: any }) {
+  if (!data) return;
+
+  // accept several key formats (camelCase / snake_case)
+  const productId = data.productId ?? data.product_id ?? data.productid ?? null;
+  const screen = data.screen ?? data.screenName ?? data.targetScreen ?? null;
+  const userId = data.userId ?? data.user_id ?? null;
+
+  if (screen === 'product_detail') {
+    if (productId && productId !== 'none' && productId !== 'null') {
+      navigate(AppRoutes?.productDetail, { productId: productId });
+      return;
+    } else {
+      console.log('Notification requested product_detail but productId missing.');
+    }
+  } else if (screen === 'chat') {
+    navigate(AppRoutes?.ChatListing, { userId });
+    return;
+  }
+
+  if (screen) {
+    try {
+      const params = data.params ? JSON.parse(data.params) : undefined;
+      navigate(screen, params);
+    } catch (e) {
+      console.warn('Failed to navigate to screen from notification (fallback):', e);
+    }
+  }
+}
+
 function App(): React.JSX.Element {
   const linking = {
     prefixes: ["myapp://", "https://api.inva.net.in"],
     config: {
       screens: {
-        productDetail: "product/:id",
+        ProductDetail: "product/:id",
+        // add other deep links if needed
       },
     },
   };
 
   useEffect(() => {
+    let unsubOnMessage: (() => void) | null = null;
+    let notifeeForegroundUnsub: (() => void) | null = null;
+
     (async () => {
-      const ok = await requestNotificationPermission();
-      if (!ok) {
-        Alert.alert('Notifications disabled', 'User declined notification permission');
-      }
+      try {
+        // 1. permission (Android 13+)
+        const ok = await requestNotificationPermission();
+        if (!ok) {
+          Alert.alert('Notifications disabled', 'User declined notification permission');
+        }
 
-      // create a default channel for android
-      await notifee.createChannel({
-        id: 'default',
-        name: 'Default Channel',
-        importance: AndroidImportance.HIGH,
-      });
-
-      // get FCM token
-      const token = await messaging().getToken();
-      console.log('FCM token:', token);
-      // send this token to your server so you can target this device
-
-      // foreground message handler
-      const unsubscribe = messaging().onMessage(async remoteMessage => {
-        console.log('Foreground message:', remoteMessage);
-        // show notification in foreground
-        await notifee.displayNotification({
-          title: remoteMessage.notification?.title ?? 'Message',
-          body: remoteMessage.notification?.body ?? '',
-          android: { channelId: 'default', smallIcon: 'ic_launcher' },
+        // 2. create channel for Android
+        await notifee.createChannel({
+          id: 'default',
+          name: 'Default Channel',
+          importance: AndroidImportance.HIGH,
         });
-      });
 
-      return () => unsubscribe();
+        // 3. get FCM token
+        try {
+          const token = await messaging().getToken();
+          console.log('FCM token:', token);
+          // send token to backend if necessary
+        } catch (err) {
+          console.warn('Failed to get FCM token', err);
+        }
+
+        // 4. foreground messages: show local notification and log the payload
+        unsubOnMessage = messaging().onMessage(async (remoteMessage) => {
+          console.log('FCM onMessage (foreground) FULL:', JSON.stringify(remoteMessage, null, 2));
+          await handleForegroundMessage(remoteMessage);
+        });
+
+        // 5. background tap (app in background, user taps notification)
+        messaging().onNotificationOpenedApp(remoteMessage => {
+          console.log('onNotificationOpenedApp FULL:', JSON.stringify(remoteMessage, null, 2));
+          const data = remoteMessage?.data ?? {};
+          console.log('onNotificationOpenedApp data:', data);
+          handleNotificationNavigationFromData(data);
+        });
+
+        // 6. app launched from killed state via notification
+        const initialNotification = await messaging().getInitialNotification();
+        if (initialNotification) {
+          console.log('getInitialNotification FULL:', JSON.stringify(initialNotification, null, 2));
+          // small delay to allow navigation stack to initialize
+          setTimeout(() => {
+            handleNotificationNavigationFromData(initialNotification.data ?? {});
+          }, 500);
+        }
+
+        // 7. Notifee foreground event listener (press while app in foreground)
+        notifeeForegroundUnsub = notifee.onForegroundEvent(({ type, detail }) => {
+          if (type === NotifeeEventType.PRESS) {
+            console.log('Notifee PRESS event (foreground) FULL:', JSON.stringify(detail, null, 2));
+            const data = detail.notification?.data ?? {};
+            console.log('Notifee press data:', data);
+            handleNotificationNavigationFromData(data);
+          }
+        });
+
+        // 8. Notifee initial notification (app opened from killed state via notifee)
+        const initialNotifee = await notifee.getInitialNotification();
+        if (initialNotifee?.notification) {
+          console.log('Notifee initial notification FULL:', JSON.stringify(initialNotifee, null, 2));
+          setTimeout(() => {
+            handleNotificationNavigationFromData(initialNotifee.notification.data ?? {});
+          }, 500);
+        }
+
+        // Optionally initialize AppsFlyer or other analytics
+        try {
+          initAppsFlyer();
+        } catch (err) {
+          console.warn('AppsFlyer init error:', err);
+        }
+      } catch (err) {
+        console.warn('Notification setup error:', err);
+      }
     })();
+
+    // cleanup
+    return () => {
+      if (unsubOnMessage) unsubOnMessage();
+      if (notifeeForegroundUnsub) notifeeForegroundUnsub();
+    };
   }, []);
-
-
-
 
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <NavigationContainer linking={linking}>
+        <NavigationContainer linking={linking} ref={navigationRef}>
           <MainStack />
         </NavigationContainer>
       </PersistGate>

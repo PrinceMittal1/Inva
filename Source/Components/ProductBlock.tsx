@@ -86,6 +86,8 @@ const ProductBlock = ({
     const toggleFollowInSubcollections = async () => {
         try {
             const res = await followSeller(user_id, blockItem?.sellerId)
+
+            console.log("res res res res ----------- ", res)
             if(res?.status == 201){
                 setBlockItem({...blockItem, followed : false})
             }else if(res?.status == 200){
