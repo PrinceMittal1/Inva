@@ -17,6 +17,7 @@ import notifee, { AndroidImportance, EventType as NotifeeEventType } from '@noti
 import { initAppsFlyer } from './Source/Functions/AppsFlyerConfig'; // optional
 import { navigationRef, navigate } from './NavigationRef'; // adjust path if needed
 import AppRoutes from './Source/Routes/AppRoutes';
+import { updatingFCM } from './Source/Apis';
 
 // Request Android 13+ notification permission
 async function requestNotificationPermission(): Promise<boolean> {
@@ -111,6 +112,15 @@ function App(): React.JSX.Element {
         // 3. get FCM token
         try {
           const token = await messaging().getToken();
+          const state: any = store.getState();
+          if (token && state?.userData?.userData?._id && state?.userData?.userData?._id?.length > 0) {
+            let notification_token = token;
+            let user_id = state?.userData?.userData?._id;
+            const res = await updatingFCM({
+              user_id,
+              notification_token
+            });
+          }
           console.log('FCM token:', token);
           // send token to backend if necessary
         } catch (err) {

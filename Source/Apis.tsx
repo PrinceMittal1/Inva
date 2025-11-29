@@ -123,6 +123,21 @@ export const gettingProductDetail = async (payload: any) => {
   }
 }
 
+export const updatingFCM = async (payload: any) => {
+  try {
+    const response = await axios.post(
+      `${apiUrl}users/updating/fcm`,
+      payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response;
+  } catch (error: any) {
+    console.log("response is ----- profile  ", error)
+  }
+};
+
 // /seller/product/details
 
 
