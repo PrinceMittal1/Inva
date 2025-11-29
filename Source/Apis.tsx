@@ -123,6 +123,8 @@ export const gettingProductDetail = async (payload: any) => {
   }
 }
 
+// /seller/product/details
+
 
 export const fetchingSellerProfile = async (payload: any) => {
   try {
