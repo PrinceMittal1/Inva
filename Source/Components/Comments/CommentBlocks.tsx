@@ -106,9 +106,7 @@ const CommentBlocks = ({ item, index, onCrossPress, onReplyPress, deletingCommen
   return (
     <>
       <View style={styles.mainView}>
-        <Pressable onPress={() => {
-          onCrossPress();
-        }}>
+        <Pressable style={{borderWidth:1, borderColor:'black', height: 38, width: 38, borderRadius:19, justifyContent:'center', alignItems:'center'}}>
           <FastImage
             source={itemSaved?.profile_picture ? { uri: itemSaved?.profile_picture } : Images.person}
             style={styles.userIcon}

@@ -215,10 +215,10 @@ const useStyles = () =>
       justifyContent: "space-between",
       paddingHorizontal: 2,
     },
-    count: { color: 'white' },
+    count: { color: 'black' },
     whiteView: {
       width: "100%",
-      backgroundColor: 'grey',
+      backgroundColor: '#FFF6F3',
       height: "56%",
       borderTopRightRadius: 20,
       borderTopLeftRadius: 20,

@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ActivityIndicator, Dimensions, FlatList, Linking, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native"
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import FastImage from "@d11/react-native-fast-image";
@@ -9,7 +9,7 @@ import Header from "../Components/Header";
 import { fetchingSellerProfile, getProductsForSellerPage, handleItemViewed } from "../Apis";
 import AppRoutes from "../Routes/AppRoutes";
 import CommentModal from "../Components/Comments/CommentModal";
-import { wp } from "../Keys/dimension";
+import { hp, wp } from "../Keys/dimension";
 import Images from '../Keys/Images';
 import Colors from "../Keys/colors";
 
@@ -90,7 +90,7 @@ const SellerProfile = () => {
     const statusChangingForFollow = (id: any, state: boolean) => {
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product._id === id
+                true
                     ? { ...product, follow: state }
                     : product
             )
@@ -132,10 +132,25 @@ const SellerProfile = () => {
 
 
 
+    const headerTitle = useMemo(()=>{
+        return (route?.params?.seller_name && route?.params?.seller_name?.length > 0) ? route?.params?.seller_name : 'Seller Details'
+    },[route?.params?.seller_name])
+
+    const sellerImage = useMemo(()=>{
+        if(route?.params?.profile_picture && route?.params?.profile_picture?.length > 0){
+            return { uri: sellerDetails?.profile_picture }
+        }else if(route?.params?.sellerProfile && route?.params?.sellerProfile?.length > 0){
+            return { uri: sellerDetails?.sellerProfile }
+        }else{
+            return Images?.people
+        }
+    },[route?.params?.profile_picture, route?.params?.sellerProfile])
+
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'white', marginTop: (statusBarHeight + 0) }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', marginTop: (statusBarHeight + 0) }}>
             <Header
-                title={route?.params?.seller_name}
+                title={headerTitle}
                 rightIcon={Images?.chat}
                 rightClick={() => {
                     navigation.navigate(AppRoutes?.Chat, {
@@ -149,8 +164,8 @@ const SellerProfile = () => {
 
             <ScrollView>
                 <View style={{ width: screenWidth * 0.95, alignSelf: 'center', marginTop: wp(4) }}>
-                    <View style={{ flex: 4, borderRadius: 30, overflow: 'hidden' }}>
-                        <FastImage source={{ uri: sellerDetails?.profile_picture }} resizeMode="cover" style={{ alignSelf: 'center', borderRadius: wp(3), width: screenWidth * 0.4, height: screenWidth * 0.4 }} />
+                    <View style={{ flex: 4, borderRadius: screenWidth * 0.22, overflow: 'hidden', borderWidth:1, borderColor:'black', width: screenWidth * 0.41, height: screenWidth * 0.41, justifyContent:'center', alignItems:'center', alignSelf:'center'  }}>
+                        <FastImage source={sellerImage} resizeMode="cover" style={{ alignSelf: 'center', borderRadius: wp(3), width: screenWidth * 0.4, height: screenWidth * 0.4 }} />
                     </View>
 
                     <View style={{ flex: 6, alignItems: 'center' }}>
@@ -176,6 +191,7 @@ const SellerProfile = () => {
                         <FlatList
                             data={allProducts}
                             renderItem={RenderItem}
+                            style={{marginBottom:hp(5)}}
                             keyExtractor={(item) => `${item._id}-${item.followed}-${item.saved}`}
                             onViewableItemsChanged={onViewableItemsChanged.current}
                             viewabilityConfig={viewabilityConfig.current}
