@@ -25,6 +25,7 @@ const Images = {
     "send" : require("../Assets/send.png"),
     "attach" : require("../Assets/attach.png"),
     "upArrow": require("../Assets/upArrow.png"),
+    "people" :require("../Assets/people.png"),
     "downArrow" : require("../Assets/downArrow.png")
 }
 

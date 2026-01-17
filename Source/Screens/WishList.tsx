@@ -11,6 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import Images from "../Keys/Images";
 import AppRoutes from "../Routes/AppRoutes";
 import CommentModal from "../Components/Comments/CommentModal";
+import { wp } from "../Keys/dimension";
 
 const WishList = () => {
     const [allProducts, setAllProducts] = useState<any>({});
@@ -102,7 +103,7 @@ const WishList = () => {
         )
     }
 
-    console.log("products are --------- ", allProducts)
+    console.log("products are --------- ", allProducts?.[0]?.sellerName)
 
 
     return (
@@ -127,6 +128,7 @@ const WishList = () => {
                 <Header title={'Saved Product'} />
                 <FlatList
                     data={allProducts}
+                    style={{marginBottom:wp(10)}}
                     renderItem={RenderItem}
                     keyExtractor={(item, index) => `${index}-${item?.saved}`}
                     onViewableItemsChanged={onViewableItemsChanged.current}

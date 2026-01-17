@@ -16,7 +16,8 @@ import ImageCropPicker from "react-native-image-crop-picker";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
 import Geolocation from "@react-native-community/geolocation";
-import { updatingUserApi } from "../Apis";
+import { gettingIntersetsType, updatingUserApi } from "../Apis";
+import DropDownForInterset from "../Components/DropDownForInterset";
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ const ScreenForUserDetails = () => {
     const [name, setName] = useState("");
     const [selectedTags, setSelectedTags] = useState([]);
     const [profileImage, setProfileImage] = useState<any>(null);
+    const [allIntersetType, setAllInsterestType] = useState([]);
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState('');
     const navigation = useNavigation();
@@ -104,6 +106,7 @@ const ScreenForUserDetails = () => {
     }
 
     useEffect(() => {
+        gettingAllInterset('')
         const indianStates = State.getStatesOfCountry('IN');
         setStates(indianStates.map(s => `${s.name} (${s.isoCode})`));
         const citiesList = City.getCitiesOfState('IN', 'PB');
@@ -166,8 +169,8 @@ const ScreenForUserDetails = () => {
             state: selectedStateCode?.value,
             city: selectedCity,
             profile_picture: profile_picture,
-            interest: selectedTags,
-            name : name,
+            interest: selectedTags.map(item => item.label),
+            name: name,
         })
         if (ref?.status == 200) {
             navigation.reset({
@@ -180,13 +183,13 @@ const ScreenForUserDetails = () => {
     };
 
     const removeItem = (itemToRemove: string) => {
-        setSelectedTags(prevItems => prevItems.filter(item => item !== itemToRemove));
+        setSelectedTags(prevItems => prevItems.filter(item => item?.label !== itemToRemove?.label));
     };
 
     const RenderItemForSelectedProduct = ({ item }: { item: any }) => {
         return (
             <View style={styles.tagItem}>
-                <Text style={styles.tagText}>{item}</Text>
+                <Text style={styles.tagText}>{item?.label}</Text>
                 <Pressable onPress={() => { removeItem(item) }} style={styles.tagRemoveButton}>
                     <Image
                         source={Images?.Cancel}
@@ -197,6 +200,19 @@ const ScreenForUserDetails = () => {
             </View>
         );
     };
+
+    const gettingAllInterset = async (val : string) => {
+        try {
+            const res = await gettingIntersetsType({
+                search : val
+            });
+            if (res?.status == 200) {
+                setAllInsterestType(res?.data?.interests)
+            } else {
+            }
+        } catch (error) {
+        }
+    }
 
     return (
         <>
@@ -229,20 +245,20 @@ const ScreenForUserDetails = () => {
                         </Pressable>
                     </View>
 
-                    <View style={[styles.inputContainer, { marginTop: hp(3) }]}>
+                    <View style={[styles.inputContainer, { marginTop: hp(2) }]}>
                         <Text style={styles.inputLabel}>Name</Text>
                         <View style={styles?.dropdown}>
                             <TextInput
                                 value={name}
-                                style={{fontFamily: AppFonts.Regular, fontSize: 16}}
+                                style={{ fontFamily: AppFonts.Regular, fontSize: 16 }}
                                 placeholder="name"
                                 placeholderTextColor={Colors?.DarkText}
-                                onChangeText={setName} 
-                                />
+                                onChangeText={setName}
+                            />
                         </View>
                     </View>
 
-                    <View style={[styles.inputContainer, { marginTop: hp(3) }]}>
+                    <View style={[styles.inputContainer, { marginTop: hp(2) }]}>
                         <Text style={styles.inputLabel}>Select Your Age</Text>
                         <Dropdown
                             options={ageOptions}
@@ -258,10 +274,12 @@ const ScreenForUserDetails = () => {
                                 <RenderItemForSelectedProduct key={index} item={item} />
                             ))}
                         </View>
-                        <Dropdown
-                            options={['Saree', 'Suits', 'Toy gun', 'Crockery', 'Pants', 'Shirts']}
+                        <DropDownForInterset
+                            options={allIntersetType}
                             selectedValue={''}
+                            changingSearchVal={gettingAllInterset}
                             barBorderColor={{ borderColor: 'black', paddingVertical: 10 }}
+                            removeItem={removeItem}
                             alreadySelectedOptions={selectedTags}
                             onValueChange={(item) => {
                                 if (!selectedTags.includes(item)) {
@@ -317,11 +335,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors?.PrimaryBackground,
     },
-     dropdown: {
+    dropdown: {
         paddingHorizontal: 12,
-        height:wp(12),
+        height: wp(12),
         borderWidth: 1,
-        justifyContent:'center',
+        justifyContent: 'center',
         borderColor: Colors?.buttonPrimaryColor,
         borderRadius: 8,
     },

@@ -134,7 +134,7 @@ export const updatingFCM = async (payload: any) => {
     });
     return response;
   } catch (error: any) {
-    console.log("response is ----- profile  ", error)
+    // console.log("response is ----- profile  ", error)
   }
 };
 
@@ -216,7 +216,7 @@ export const getUserProfile = async (
     );
     return response;
   } catch (error: any) {
-    console.log("response is ----- profile  ", error)
+    // console.log("response is ----- profile  ", error)
   }
 };
 
@@ -244,7 +244,7 @@ export const gettingPrivacyPolicy = async () => {
     );
     return response;
   } catch (error: any) {
-    console.log("response is ----- profile  ", error)
+    // console.log("response is ----- profile  ", error)
   }
 };
 
@@ -258,6 +258,22 @@ export const gettingTerms = async () => {
     );
     return response;
   } catch (error: any) {
-    console.log("response is ----- profile  ", error)
+    // console.log("response is ----- profile  ", error)
+  }
+};
+
+
+export const gettingIntersetsType = async (payload: any) => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}productType/interest/types`,
+      {
+        params: payload,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    return response;
+  } catch (error: any) {
+    // console.log("response is ----- gettingIntersetsType  ", error)
   }
 };

@@ -129,11 +129,11 @@ const ProductBlock = ({
                         }}
                     >
                         <FastImage
-                            source={{ uri: blockItem?.sellerProfile ?? '' }}
+                            source={blockItem?.sellerProfile ? { uri: blockItem?.sellerProfile ?? '' } : Images?.people }
                             style={styles.sellerImage}
                             resizeMode="contain"
                         />
-                        <Text style={styles.sellerName}>{blockItem?.sellerName}</Text>
+                        <Text style={styles.sellerName}>{(blockItem?.sellerName && blockItem?.sellerName?.length > 0) ?  blockItem?.sellerName : '--'}</Text>
                     </Pressable>
                 }
 
@@ -275,6 +275,8 @@ const useStyles = () =>
         sellerImage: {
             width: 50,
             height: 50,
+            borderWidth:1,
+            borderColor:'#e9aea0',
             borderRadius: 25
         },
         sellerName: {
