@@ -10,7 +10,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import FastImage from "@d11/react-native-fast-image";
 import "moment/locale/es";
@@ -114,6 +114,11 @@ const ProductBlock = ({
         await toggleLike({ product_id, user_id })
     };
 
+    const nameOfSeller = useMemo(()=>{
+        return (blockItem?.sellerName && blockItem?.sellerName?.length>0) ? blockItem?.sellerName : (blockItem?.businessName && blockItem?.businessName?.length>0) ? blockItem?.businessName : '--'
+    },[blockItem?.sellerName, blockItem?.businessName])
+
+
     return (
         <View style={styles.mainView}>
             <View style={showShopName && styles.sellerRow}>
@@ -132,7 +137,7 @@ const ProductBlock = ({
                             style={styles.sellerImage}
                             resizeMode="contain"
                         />
-                        <Text style={styles.sellerName}>{(blockItem?.sellerName && blockItem?.sellerName?.length > 0) ?  blockItem?.sellerName : '--'}</Text>
+                        <Text style={styles.sellerName}>{nameOfSeller}</Text>
                     </Pressable>
                 }
 

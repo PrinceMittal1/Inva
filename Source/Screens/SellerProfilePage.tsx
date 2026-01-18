@@ -137,14 +137,15 @@ const SellerProfile = () => {
     },[route?.params?.seller_name])
 
     const sellerImage = useMemo(()=>{
-        if(route?.params?.profile_picture && route?.params?.profile_picture?.length > 0){
+        if(sellerDetails?.profile_picture && sellerDetails?.profile_picture?.length > 0){
             return { uri: sellerDetails?.profile_picture }
-        }else if(route?.params?.sellerProfile && route?.params?.sellerProfile?.length > 0){
+        }else if(sellerDetails?.sellerProfile && sellerDetails?.sellerProfile?.length > 0){
             return { uri: sellerDetails?.sellerProfile }
         }else{
             return Images?.people
         }
-    },[route?.params?.profile_picture, route?.params?.sellerProfile])
+    },[sellerDetails?.profile_picture, sellerDetails?.sellerProfile])
+
 
 
     return (
