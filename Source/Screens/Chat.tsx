@@ -152,7 +152,6 @@ const Chat = () => {
     };
 
     const sendingMessageToBackend = async () => {
-        console.log("sendingLock.currentsendingLock.current", sendingLock.current)
         if (sendingLock.current) return;
         sendingLock.current = true
 
@@ -202,7 +201,7 @@ const Chat = () => {
         } catch (error) {
             console.error("⚠️ Catch Error:", error);
         } finally {
-            dispatch(setLoader(false));
+            setLoader(false)
         }
     };
 
