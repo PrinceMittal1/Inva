@@ -81,7 +81,12 @@ const Login = () => {
                         email: additionalUserInfo?.profile?.email
                     }
                     const res: any = await creatingUserApi(data)
-                    if (res?.status == 200) {
+                    // console.log("res on login is --- ", res?.data?.user)
+                    if (res?.status == 201) {
+                        dispatch(setUserId(res?.data?.user?._id));
+                        navigation.replace(AppRoutes?.BottomBar);
+                        dispatch(setUserData(res?.data?.user))
+                    }else if (res?.status == 200) {
                         dispatch(setUserId(res?.data?.user?._id));
                         navigation.navigate(AppRoutes?.ScreenForUserDetail);
                         logEvent("Login_InvaCst", {

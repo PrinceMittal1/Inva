@@ -10,7 +10,6 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import log from "../Functions/logs";
 import { useDispatch, useSelector } from "react-redux";
 import ImageCropPicker from "react-native-image-crop-picker";
-import { setLoader } from "../Redux/Reducers/tempData";
 import RNFS from 'react-native-fs';
 import storage from '@react-native-firebase/storage';
 import FastImage from "@d11/react-native-fast-image";
@@ -28,11 +27,13 @@ const Chat = () => {
         total: 1,
         state: false
     })
+    const sendingLock = useRef(false);
     const [chatRoomRef, setChatRoomRef] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
     const { user_id, userData } = useSelector((state: any) => state.userData);
     const [lastDoc, setLastDoc] = useState(null);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [loader, setLoader] = useState(false);
     const firstPageLoaded = useRef(false);
     const [textMessage, setTextMessage] = useState('')
     const navigation = useNavigation();
@@ -50,19 +51,19 @@ const Chat = () => {
     }, [])
 
     const compressImage = async (uri: string) => {
-  try {
-    const compressedUri = await Image.compress(uri, {
-      maxWidth: 1024,
-      maxHeight: 1024,
-      quality: 0.65,   // 65% quality — WhatsApp level
-    });
+        try {
+            const compressedUri = await Image.compress(uri, {
+                maxWidth: 1024,
+                maxHeight: 1024,
+                quality: 0.65,   // 65% quality — WhatsApp level
+            });
 
-    return compressedUri; // new compressed file path
-  } catch (error) {
-    console.log("Compression error:", error);
-    return null;
-  }
-};
+            return compressedUri; // new compressed file path
+        } catch (error) {
+            console.log("Compression error:", error);
+            return null;
+        }
+    };
 
     useEffect(() => {
         const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -151,16 +152,29 @@ const Chat = () => {
     };
 
     const sendingMessageToBackend = async () => {
-        if (images1.length > 0) {
-            sendingImagesTobackend();
-        } else {
-            let textMessageDummy = textMessage;
-            setTextMessage('')
-            const res = await fireUtils?.sendMessageToRoom(chatRoomRef, route?.params?.user_id, textMessageDummy, [])
-            if (res) {
+        console.log("sendingLock.currentsendingLock.current", sendingLock.current)
+        if (sendingLock.current) return;
+        sendingLock.current = true
+
+
+        try {
+            if (images1.length > 0) {
+                setLoader(true)
+                await sendingImagesTobackend();
+            } else {
+                let textMessageDummy = textMessage;
                 setTextMessage('')
-                setImages([])
+                const res = await fireUtils?.sendMessageToRoom(chatRoomRef, route?.params?.user_id, textMessageDummy, [])
+                if (res) {
+                    setTextMessage('')
+                    setImages([])
+                }
             }
+        } catch (error) {
+
+        } finally {
+            setLoader(false)
+            sendingLock.current = false
         }
     }
 
@@ -265,97 +279,114 @@ const Chat = () => {
         )
     }
 
-    const headerTitle = useMemo(()=>{
-        return (route?.params?.sellerDisplayName && route?.params?.sellerDisplayName?.length>0) ? route?.params?.sellerDisplayName : 'Seller'
-    },[route?.params?.sellerDisplayName])
+    const headerTitle = useMemo(() => {
+        return (route?.params?.sellerDisplayName && route?.params?.sellerDisplayName?.length > 0) ? route?.params?.sellerDisplayName : 'Seller'
+    }, [route?.params?.sellerDisplayName])
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior="padding"
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 :  isKeyboardOpen ? -hp(4) : -hp(0)}
-            >
+        <>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
+                </View>
+            )}
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior="padding"
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : isKeyboardOpen ? -hp(4) : -hp(0)}
+                >
 
-                <Header title={headerTitle} showbackIcon={true} />
+                    <Header title={headerTitle} showbackIcon={true} />
 
-                <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1 }}>
 
-                    <FlatList
-                        style={{ flex: 1 }}
-                        data={messages}
-                        contentContainerStyle={{ padding: 10, paddingBottom: hp(6) }}
-                        keyExtractor={(item, index) => `${item.id}_${index}`}
-                        renderItem={RenderItem}
-                        inverted
-                        onEndReached={loadMoreMessages}
-                        onEndReachedThreshold={0.1}
-                        ListFooterComponent={() =>
-                            loadingMore ? <ActivityIndicator size="small" color="#000" /> : null
-                        }
-                        keyboardShouldPersistTaps="handled"
-                    />
-
-                    <View
-                        style={{
-                            paddingHorizontal: 10,
-                            paddingVertical: 8,
-                            backgroundColor: '#f1f1f1',
-                            borderTopWidth: 1,
-                            borderColor: '#ccc',
-                        }}
-                    >
                         <FlatList
-                            data={images1}
-                            horizontal
-                            style={{ alignSelf: 'flex-start' }}
-                            renderItem={RenderItemForUploadingImage}
+                            style={{ flex: 1 }}
+                            data={messages}
+                            contentContainerStyle={{ padding: 10, paddingBottom: hp(6) }}
+                            keyExtractor={(item, index) => `${item.id}_${index}`}
+                            renderItem={RenderItem}
+                            inverted
+                            onEndReached={loadMoreMessages}
+                            onEndReachedThreshold={0.1}
+                            ListFooterComponent={() =>
+                                loadingMore ? <ActivityIndicator size="small" color="#000" /> : null
+                            }
+                            keyboardShouldPersistTaps="handled"
                         />
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <View style={{
-                                flex: 1,
-                                paddingHorizontal: 12,
-                                paddingVertical: Platform.OS === 'ios' ? 12 : 8,
-                                backgroundColor: 'white',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                borderRadius: 20,
-                                borderWidth: 1,
-                                borderColor: '#ddd',
-                            }}>
-                                <TextInput
-                                    value={textMessage}
-                                    onChangeText={setTextMessage}
-                                    placeholder="Type a message..."
-                                    style={{ flex: 1 }}
-                                    onSubmitEditing={sendingMessageToBackend}
-                                />
+                        <View
+                            style={{
+                                paddingHorizontal: 10,
+                                paddingVertical: 8,
+                                backgroundColor: '#f1f1f1',
+                                borderTopWidth: 1,
+                                borderColor: '#ccc',
+                            }}
+                        >
+                            <FlatList
+                                data={images1}
+                                horizontal
+                                style={{ alignSelf: 'flex-start' }}
+                                renderItem={RenderItemForUploadingImage}
+                            />
 
-                                <Pressable onPress={openGallery}>
-                                    <FastImage source={Images?.attach} style={{ width: wp(5), height: wp(5) }} resizeMode="contain" />
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <View style={{
+                                    flex: 1,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+                                    backgroundColor: 'white',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    borderRadius: 20,
+                                    borderWidth: 1,
+                                    borderColor: '#ddd',
+                                }}>
+                                    <TextInput
+                                        value={textMessage}
+                                        onChangeText={setTextMessage}
+                                        placeholder="Type a message..."
+                                        style={{ flex: 1 }}
+                                        onSubmitEditing={sendingMessageToBackend}
+                                    />
+
+                                    <Pressable onPress={openGallery}>
+                                        <FastImage source={Images?.attach} style={{ width: wp(5), height: wp(5) }} resizeMode="contain" />
+                                    </Pressable>
+                                </View>
+
+                                <Pressable
+                                    onPress={sendingMessageToBackend}
+                                    style={{
+                                        marginLeft: 10,
+                                        backgroundColor: '#00b894',
+                                        paddingVertical: 10,
+                                        paddingHorizontal: 16,
+                                        borderRadius: 20,
+                                    }}
+                                >
+                                    <Text style={{ color: 'white' }}>Send</Text>
                                 </Pressable>
                             </View>
-
-                            <Pressable
-                                onPress={sendingMessageToBackend}
-                                style={{
-                                    marginLeft: 10,
-                                    backgroundColor: '#00b894',
-                                    paddingVertical: 10,
-                                    paddingHorizontal: 16,
-                                    borderRadius: 20,
-                                }}
-                            >
-                                <Text style={{ color: 'white' }}>Send</Text>
-                            </Pressable>
                         </View>
-                    </View>
 
-                </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                    </View>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </>
     )
 }
 

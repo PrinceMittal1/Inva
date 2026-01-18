@@ -9,7 +9,7 @@ import AppFonts from "../Functions/Fonts";
 import AppRoutes from "../Routes/AppRoutes";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import { useDispatch } from "react-redux";
-import { setUserId } from "../Redux/Reducers/userData";
+import { setUserData, setUserId } from "../Redux/Reducers/userData";
 import { creatingUserApi } from "../Apis";
 import { apiUrl } from "../env";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -36,8 +36,11 @@ const VerificationScreen = () => {
                 phoneNumber: phoneNumber
             }
             const res: any = await creatingUserApi(data)
-            console.log("res ++ ", res)
-            if (res?.status == 200) {
+            if (res?.status == 201) {
+                dispatch(setUserId(res?.data?.user?._id));
+                navigation.replace(AppRoutes?.BottomBar);
+                dispatch(setUserData(res?.data?.user))
+            } else if (res?.status == 200) {
                 dispatch(setUserId(res?.data?.user?._id));
                 navigation.navigate(AppRoutes?.ScreenForUserDetail);
             }
@@ -47,7 +50,6 @@ const VerificationScreen = () => {
         }
     };
 
-    console.log("res ++ ", `${apiUrl}users/create`)
 
     return (
         <>

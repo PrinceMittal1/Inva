@@ -51,8 +51,6 @@ const DropDownForInterset: React.FC<DropdownProps> = ({
         return false
     }
 
-    console.log("alreadySelectedOptionsalreadySelectedOptions", alreadySelectedOptions)
-
     return (
         <View style={styles.container}>
 
