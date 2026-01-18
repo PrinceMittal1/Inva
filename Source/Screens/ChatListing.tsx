@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     FlatList,
     Keyboard,
@@ -19,6 +19,8 @@ import FastImage from "@d11/react-native-fast-image";
 import Header from "../Components/Header";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import AppRoutes from "../Routes/AppRoutes";
+import Images from "../Keys/Images";
+
 
 const ChatListing = () => {
     const [allChat, setAllChats] = useState<any>([]);
@@ -43,6 +45,16 @@ const ChatListing = () => {
     }, [focus]);
 
     const RenderItem = ({ item }: any) => {
+
+        const imageForChat =
+            item?.seller_profile?.length > 0
+                ? { uri: item.seller_profile }
+                : item?.business_picture?.length > 0
+                    ? { uri: item.business_picture }
+                    : Images.person;
+
+        const nameOfSeller = item?.seller_name?.length > 0 ? item?.seller_name : item?.business_name?.length > 0 ? item?.business_name : 'Seller'
+
         return (
             <Pressable
                 onPress={() => {
@@ -56,14 +68,14 @@ const ChatListing = () => {
             >
                 <View style={styles.imageContainer}>
                     <FastImage
-                        source={{ uri: `${item?.seller_profile}` }}
+                        source={imageForChat}
                         style={styles.image}
                         resizeMode="contain"
                     />
                 </View>
 
                 <View style={styles.textContainer}>
-                    <Text style={styles.businessName}>{item?.seller_name}</Text>
+                    <Text style={styles.businessName}>{nameOfSeller}</Text>
                     <Text>{item?.lastMessage}</Text>
                 </View>
 
@@ -76,40 +88,40 @@ const ChatListing = () => {
 
     return (
         <>
-                    {loader && (
-                        <View style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: 'rgba(0,0,0,0.3)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            zIndex: 999
-                        }}>
-                            <ActivityIndicator size="large" color="#fff" />
-                        </View>
-                    )}
-        <SafeAreaView style={styles.safeArea}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-                style={styles.keyboardAvoiding}
-                keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + hp(1) : 0}
-            >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <>
-                        <Header title={"Chats"} showbackIcon={true} />
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
+                </View>
+            )}
+            <SafeAreaView style={styles.safeArea}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                    style={styles.keyboardAvoiding}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + hp(1) : 0}
+                >
+                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                        <>
+                            <Header title={"Chats"} showbackIcon={true} />
 
-                        <FlatList
-                            data={allChat}
-                            style={styles.list}
-                            renderItem={RenderItem}
-                        />
-                    </>
-                </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                            <FlatList
+                                data={allChat}
+                                style={styles.list}
+                                renderItem={RenderItem}
+                            />
+                        </>
+                    </TouchableWithoutFeedback>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
         </>
     );
 };
@@ -137,11 +149,16 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
     imageContainer: {
-        flex: 1
+        borderWidth:1,
+        width: wp(12.5),
+        height: wp(12.5),
+        justifyContent:'center',
+        alignItems:'center',
+        borderRadius:wp(7)
     },
     image: {
-        width: wp(12),
-        height: wp(12),
+        width: wp(10),
+        height: wp(10),
         borderRadius: 25
     },
     textContainer: {

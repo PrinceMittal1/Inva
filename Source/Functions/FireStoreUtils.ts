@@ -4,6 +4,7 @@ import moment from "moment";
 import { Platform } from "react-native";
 import storage from '@react-native-firebase/storage';
 import RNFS from 'react-native-fs';
+import { Image } from 'react-native-compressor';
 
 export default function useFireStoreUtil() {
 
@@ -111,10 +112,24 @@ export default function useFireStoreUtil() {
         }
     };
 
+        const compressImage = async (uri: string) => {
+  try {
+    const compressedUri = await Image.compress(uri, {
+      maxWidth: 1024,
+      maxHeight: 1024,
+      quality: 0.65,   // 65% quality — WhatsApp level
+    });
+
+    return compressedUri; // new compressed file path
+  } catch (error) {
+    console.log("Compression error:", error);
+    return null;
+  }
+};
 
     const uploadMediaToFirebase = async (data: any) => {
         try {
-            const uri = data;
+            const uri = await compressImage(data);
             if (!uri) throw new Error("No file URI");
             const fileName = `file_${Date.now()}.jpg`;
             const pathToFile = Platform.OS === 'ios' ? uri.replace('file://', '') : uri.replace('file://', '');

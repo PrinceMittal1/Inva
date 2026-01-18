@@ -14,7 +14,7 @@ import { setLoader } from "../Redux/Reducers/tempData";
 import RNFS from 'react-native-fs';
 import storage from '@react-native-firebase/storage';
 import FastImage from "@d11/react-native-fast-image";
-
+import { Image } from 'react-native-compressor';
 
 const PAGE_SIZE = 15;
 const Chat = () => {
@@ -48,6 +48,21 @@ const Chat = () => {
     useEffect(() => {
         initalisingChat();
     }, [])
+
+    const compressImage = async (uri: string) => {
+  try {
+    const compressedUri = await Image.compress(uri, {
+      maxWidth: 1024,
+      maxHeight: 1024,
+      quality: 0.65,   // 65% quality — WhatsApp level
+    });
+
+    return compressedUri; // new compressed file path
+  } catch (error) {
+    console.log("Compression error:", error);
+    return null;
+  }
+};
 
     useEffect(() => {
         const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -105,8 +120,7 @@ const Chat = () => {
 
     const uploadMediaToFirebase = async (data: any, currentNumber: any, totalNumber: any) => {
         try {
-            console.log("uri for uploadMediaToFirebase is -- ", data)
-            const uri = data;
+            const uri = await compressImage(data);
             if (!uri) throw new Error("No file URI");
             const fileName = `file_${Date.now()}.jpg`;
             const pathToFile = Platform.OS === 'ios' ? uri.replace('file://', '') : uri.replace('file://', '');

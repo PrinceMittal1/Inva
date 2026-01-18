@@ -6483,6 +6483,11 @@ react-native-appsflyer@^6.17.5:
   resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.17.5.tgz#21ad14f1aca1f34ae6ef16bb9ee939f226574fb0"
   integrity sha512-0TOUZjFg7wFIttS5sunjulzipqMl0pdg7dBMwothS9nTlXivlj0IXbYs2RiYcLjmpw81cvtbTRpNCpyjZaORAQ==
 
+react-native-compressor@^1.16.0:
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/react-native-compressor/-/react-native-compressor-1.16.0.tgz#4c1dbad91f9bb33dd06292763da5ae3bdfbf3f87"
+  integrity sha512-yBJ1j/ank4Ckx/0cKf8QiK1oATppxN8GuNBoW6P83Os7s7MUdCLzVmIXX0ikkusdrgdCaetW6j3hH2eMI54pcw==
+
 react-native-device-info@^14.0.4:
   version "14.0.4"
   resolved "https://registry.yarnpkg.com/react-native-device-info/-/react-native-device-info-14.0.4.tgz#56b24ace9ff29a66bdfc667209086421ed6cfdce"
