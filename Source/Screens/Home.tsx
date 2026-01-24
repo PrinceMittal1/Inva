@@ -9,6 +9,17 @@ import Images from "../Keys/Images";
 import { getProductsForHome, handleItemViewed } from "../Apis";
 import CommentModal from "../Components/Comments/CommentModal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { hp } from "../Keys/dimension";
+
+
+const ListEmptyComponent = () => {
+    return (
+        <View style={{ width: '100%', height: hp(50), alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{fontSize:20}}>No product found</Text>
+        </View>
+    )
+}
+
 
 const { width, height } = Dimensions.get('window')
 const Home = () => {
@@ -137,6 +148,7 @@ const Home = () => {
                     keyExtractor={(item, index) => `${index}-${item?.saved}`}
                     onViewableItemsChanged={onViewableItemsChanged.current}
                     viewabilityConfig={viewabilityConfig.current}
+                    ListEmptyComponent={ListEmptyComponent}
                     ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
                 />
 

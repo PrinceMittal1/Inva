@@ -61,11 +61,11 @@ const CommentModal = ({ visible, onCrossPress, productId }: any) => {
 
   const onReplyPress = async (parent_id: string, productId: string, comment: string) => {
     const fireUtils = useFireStoreUtil();
-    const response : any = await fireUtils.addingCommentForNestedProduct(parent_id, productId, comment, user_id, userData?.name ?? "", userData?.profile_picture)
+    const response: any = await fireUtils.addingCommentForNestedProduct(parent_id, productId, comment, user_id, userData?.name ?? "", userData?.profile_picture)
     if (response?.state) {
       const commentData = {
         userId: user_id,
-        id : response?.id,
+        id: response?.id,
         comment: comment,
         productId: productId,
         parent_id: parent_id,
@@ -77,10 +77,17 @@ const CommentModal = ({ visible, onCrossPress, productId }: any) => {
       setAllComments(prevComments =>
         prevComments.map(comment => {
           if (comment.id === parent_id) {
-            return {
-              ...comment,
-              replies: [commentData, ...(comment.replies || [])]
-            };
+            if (comment.replies?.length > 0) {
+              return {
+                ...comment,
+                replies: [commentData, ...comment.replies]
+              }
+            } else {
+              return {
+                ...comment,
+                replies: [commentData]
+              }
+            }
           }
           return comment;
         })
@@ -147,7 +154,7 @@ const CommentModal = ({ visible, onCrossPress, productId }: any) => {
               data={allComments}
               style={{ marginTop: 18 }}
               showsVerticalScrollIndicator={false}
-              keyExtractor={(item : any) => `${item?.id}`}
+              keyExtractor={(item: any) => `${item?.id}${item?.replies?.length}`}
               renderItem={({ item, index }: any) => {
                 return <CommentBlocks item={item} chatInputEnabledId={chatInputEnabledId} setChatInputEnabledIdfunc={setChatInputEnabledIdfunc} setChatInputEnabledFunc={setChatInputEnabledFunc} index={index} onCrossPress={onCrossPress} fetchingComments={fetchingComments} onReplyPress={onReplyPress} deletingComments={deletingComments} />;
               }}

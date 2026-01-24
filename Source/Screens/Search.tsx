@@ -14,6 +14,16 @@ import { hp, wp } from "../Keys/dimension";
 import Colors from "../Keys/colors";
 import { debounce } from "lodash";
 
+
+const ListEmptyComponent = () => {
+    return (
+        <View style={{ width: '100%', height: hp(50), alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{fontSize:20}}>No product found</Text>
+        </View>
+    )
+}
+
+
 const Search = () => {
     const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
     const dispatch = useDispatch();
@@ -82,7 +92,7 @@ const Search = () => {
     const savingItemInWishlist = (id: any, state: boolean) => {
         setAllProducts(prevProducts =>
             prevProducts.map(product =>
-                product.id === id
+                product._id === id
                     ? { ...product, saved: state }
                     : product
             )
@@ -123,7 +133,6 @@ const Search = () => {
         setSearchText(text);
         debouncedSearch(text);
     };
-
 
     return (
         <>
@@ -171,6 +180,7 @@ const Search = () => {
                     keyExtractor={(item) => `${item._id}-${item.followed}-${item.saved}`}
                     onViewableItemsChanged={onViewableItemsChanged.current}
                     viewabilityConfig={viewabilityConfig.current}
+                    ListEmptyComponent={ListEmptyComponent}
                     ListFooterComponent={loading ? <ActivityIndicator size="small" color="blue" /> : null}
                 />
 

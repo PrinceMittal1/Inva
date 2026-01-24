@@ -101,8 +101,6 @@ const CommentBlocks = ({ item, index, onCrossPress, onReplyPress, deletingCommen
     };
     return date.toLocaleDateString("en-US", options);
   };
-
-  console.log("all comments are", itemSaved)
   return (
     <>
       <View style={styles.mainView}>

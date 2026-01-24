@@ -1,4 +1,5 @@
 import {
+    ActivityIndicator,
     Dimensions,
     FlatList,
     Image,
@@ -39,6 +40,7 @@ const ProductBlock = ({
     const styles = useStyles();
     const [blockItem, setBlockItem] = useState(item);
     const navigation = useNavigation() as any;
+    const [savingState, setSavingState] = useState(false)
     const { user_id } = useSelector((state: any) => state.userData);
     const [activeIndex2, setActiveIndex2] = useState(0);
 
@@ -48,27 +50,27 @@ const ProductBlock = ({
         if (num < 1_000_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
         return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
     };
-    
-    const onSharePress = async() =>{
-        try {
-      const result = await Share.share({
-        message:
-          `Hey! 👋 Check out this product on Inva App — ❤️\nDownload now: https://invaid.onelink.me/RukT/us6cjqc2?product_id=${blockItem?._id}`,
-        title: 'Invite to Inva 💫',
-      });
 
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          console.log('Shared via:', result.activityType);
-        } else {
-          console.log('Shared successfully');
+    const onSharePress = async () => {
+        try {
+            const result = await Share.share({
+                message:
+                    `Hey! 👋 Check out this product on Inva App — ❤️\nDownload now: https://invaid.onelink.me/RukT/us6cjqc2?product_id=${blockItem?._id}`,
+                title: 'Invite to Inva 💫',
+            });
+
+            if (result.action === Share.sharedAction) {
+                if (result.activityType) {
+                    console.log('Shared via:', result.activityType);
+                } else {
+                    console.log('Shared successfully');
+                }
+            } else if (result.action === Share.dismissedAction) {
+                console.log('Share dismissed');
+            }
+        } catch (error) {
+            console.log('Error sharing:', error);
         }
-      } else if (result.action === Share.dismissedAction) {
-        console.log('Share dismissed');
-      }
-    } catch (error) {
-      console.log('Error sharing:', error);
-    }
     }
 
     const formatingDate = (timestamp: any) => {
@@ -86,21 +88,28 @@ const ProductBlock = ({
     const toggleFollowInSubcollections = async () => {
         try {
             const res = await followSeller(user_id, blockItem?.sellerId)
-            if(res?.status == 201){
-                setBlockItem({...blockItem, followed : false})
-            }else if(res?.status == 200){
+            if (res?.status == 201) {
+                setBlockItem({ ...blockItem, followed: false })
+            } else if (res?.status == 200) {
                 statusChangingForFollow()
-                 setBlockItem({...blockItem, followed : true})
+                setBlockItem({ ...blockItem, followed: true })
             }
         } catch (error) {
         }
     };
 
     const toggleSavingCollection = async () => {
-        let product_id = blockItem?._id
-        let res = await toggleSaved({ product_id, user_id })
-        if(res?.status == 200){
-            onSavePress(product_id, res?.data?.message == 'Product saved' ? true : false);
+        try {
+            setSavingState(true)
+            let product_id = blockItem?._id
+            let res = await toggleSaved({ product_id, user_id })
+            if (res?.status == 200) {
+                onSavePress(product_id, res?.data?.message == 'Product saved' ? true : false);
+            }
+        } catch (error) {
+
+        } finally {
+            setSavingState(false)
         }
     };
 
@@ -114,9 +123,9 @@ const ProductBlock = ({
         await toggleLike({ product_id, user_id })
     };
 
-    const nameOfSeller = useMemo(()=>{
-        return (blockItem?.sellerName && blockItem?.sellerName?.length>0) ? blockItem?.sellerName : (blockItem?.businessName && blockItem?.businessName?.length>0) ? blockItem?.businessName : '--'
-    },[blockItem?.sellerName, blockItem?.businessName])
+    const nameOfSeller = useMemo(() => {
+        return (blockItem?.sellerName && blockItem?.sellerName?.length > 0) ? blockItem?.sellerName : (blockItem?.businessName && blockItem?.businessName?.length > 0) ? blockItem?.businessName : '--'
+    }, [blockItem?.sellerName, blockItem?.businessName])
 
 
     return (
@@ -128,12 +137,12 @@ const ProductBlock = ({
                         onPress={() => {
                             navigation.navigate(AppRoutes?.SellerProfile, {
                                 seller_id: blockItem?.sellerId,
-                                seller_name : blockItem?.sellerName
+                                seller_name: blockItem?.sellerName
                             });
                         }}
                     >
                         <FastImage
-                            source={blockItem?.sellerProfile ? { uri: blockItem?.sellerProfile ?? '' } : Images?.people }
+                            source={blockItem?.sellerProfile ? { uri: blockItem?.sellerProfile ?? '' } : Images?.people}
                             style={styles.sellerImage}
                             resizeMode="contain"
                         />
@@ -235,13 +244,15 @@ const ProductBlock = ({
                 </View>
 
                 <View style={styles.bottomRight}>
-                    <Pressable onPress={toggleSavingCollection} style={styles.bottomIconMargin}>
-                        <Image
-                            source={blockItem?.saved ? Images.savedFilled : Images.saved}
-                            style={styles.bottomIcon}
-                            resizeMode="contain"
-                        />
-                    </Pressable>
+                    {savingState ?
+                        <ActivityIndicator />
+                        : <Pressable onPress={toggleSavingCollection} style={styles.bottomIconMargin}>
+                            <Image
+                                source={blockItem?.saved ? Images.savedFilled : Images.saved}
+                                style={styles.bottomIcon}
+                                resizeMode="contain"
+                            />
+                        </Pressable>}
 
                     <Pressable onPress={onSharePress} style={styles.bottomIconMargin}>
                         <Image source={Images.share} style={styles.bottomIcon} resizeMode="contain" />
@@ -274,26 +285,26 @@ const useStyles = () =>
         },
         sellerInfo: {
             flexDirection: 'row',
-            width:wp(60),
+            width: wp(60),
             alignItems: 'center'
         },
         sellerImage: {
             width: 50,
             height: 50,
-            borderWidth:1,
-            borderColor:'#e9aea0',
+            borderWidth: 1,
+            borderColor: '#e9aea0',
             borderRadius: 25
         },
         sellerName: {
             marginLeft: 10,
             fontSize: 18,
-            width:wp(50)
+            width: wp(50)
         },
         followBtn: {
             borderWidth: 1,
             borderColor: 'black',
             padding: 5,
-            maxWidth : wp(30),
+            maxWidth: wp(30),
             paddingHorizontal: 10,
             borderRadius: 15
         },

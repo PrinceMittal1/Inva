@@ -610,7 +610,6 @@ export default function useFireStoreUtil() {
                 })
             );
 
-            console.log("✅ All comments with replies:", comments);
             return comments;
         } catch (error) {
             console.error("❌ Error getting comments with replies:", error);
