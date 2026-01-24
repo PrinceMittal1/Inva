@@ -170,17 +170,17 @@ const SellerProfile = () => {
                     </View>
 
                     <View style={{ flex: 6, alignItems: 'center' }}>
-                        {(sellerDetails?.businessName || sellerDetails?.name) && <View>
-                            <Text style={{ fontSize: 24 }}>{sellerDetails?.businessName ?? sellerDetails?.name}</Text>
-                        </View>}
+                         <View>
+                            <Text style={{ fontSize: 24 }}>{headerTitle}</Text>
+                        </View>
                         <View>
-                            <Text style={{ fontSize: 22 }}>{`${sellerDetails?.address1 ? `${sellerDetails?.address1},` : ''}${sellerDetails?.city},${sellerDetails?.state}`}</Text>
+                            <Text style={{ fontSize: 22 }}>{`${sellerDetails?.address1 ? `${sellerDetails?.address1},` : ''}${sellerDetails?.city ?? ''},${sellerDetails?.state ?? ''}`}</Text>
                         </View>
                     </View>
 
-                    <Pressable onPress={openGoogleMaps} style={{ alignSelf: 'center', borderWidth: 1, borderColor: Colors?.buttonPrimaryColor, borderRadius: wp(3), padding: 10 }}>
+                    {sellerDetails?.latitude && sellerDetails?.longtitude && <Pressable onPress={openGoogleMaps} style={{ alignSelf: 'center', borderWidth: 1, borderColor: Colors?.buttonPrimaryColor, borderRadius: wp(3), padding: 10 }}>
                         <Text>View On Map</Text>
-                    </Pressable>
+                    </Pressable>}
                 </View>
 
                 <View style={{ width: screenWidth * 0.95, alignSelf: 'center' }}>

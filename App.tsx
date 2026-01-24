@@ -3,6 +3,7 @@ import '@react-native-firebase/app';
 import React, { useEffect } from 'react';
 import {
   Alert,
+  Linking,
   PermissionsAndroid,
   Platform,
   StyleSheet,
@@ -96,10 +97,30 @@ function App(): React.JSX.Element {
 
     (async () => {
       try {
-        // 1. permission (Android 13+)
         const ok = await requestNotificationPermission();
         if (!ok) {
-          Alert.alert('Notifications disabled', 'User declined notification permission');
+          Alert.alert(
+            'You declined notification permission',
+            'To receive important updates, please enable notifications in your device settings.',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Allow Notifications',
+                onPress: () => {
+                  // Open app settings
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                },
+              },
+            ]
+          );
+          return; // Exit early since permission is denied
         }
 
         // 2. create channel for Android

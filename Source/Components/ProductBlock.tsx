@@ -137,7 +137,7 @@ const ProductBlock = ({
                             style={styles.sellerImage}
                             resizeMode="contain"
                         />
-                        <Text style={styles.sellerName}>{nameOfSeller}</Text>
+                        <Text numberOfLines={2} ellipsizeMode="tail" style={styles.sellerName}>{nameOfSeller}</Text>
                     </Pressable>
                 }
 
@@ -274,6 +274,7 @@ const useStyles = () =>
         },
         sellerInfo: {
             flexDirection: 'row',
+            width:wp(60),
             alignItems: 'center'
         },
         sellerImage: {
@@ -285,15 +286,15 @@ const useStyles = () =>
         },
         sellerName: {
             marginLeft: 10,
-            fontSize: 18
+            fontSize: 18,
+            width:wp(50)
         },
         followBtn: {
             borderWidth: 1,
             borderColor: 'black',
             padding: 5,
             maxWidth : wp(30),
-            // alignSelf:'flex-end',
-            paddingHorizontal: 20,
+            paddingHorizontal: 10,
             borderRadius: 15
         },
         followBtnText: {

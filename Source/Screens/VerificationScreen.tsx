@@ -36,6 +36,7 @@ const VerificationScreen = () => {
                 phoneNumber: phoneNumber
             }
             const res: any = await creatingUserApi(data)
+            console.log("res for creatingUserApi", res)
             if (res?.status == 201) {
                 dispatch(setUserId(res?.data?.user?._id));
                 navigation.replace(AppRoutes?.BottomBar);
@@ -43,6 +44,8 @@ const VerificationScreen = () => {
             } else if (res?.status == 200) {
                 dispatch(setUserId(res?.data?.user?._id));
                 navigation.navigate(AppRoutes?.ScreenForUserDetail);
+            }else{
+                Alert.alert("Invalid code")
             }
         } catch (error) {
             setLoader(false)

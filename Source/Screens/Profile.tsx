@@ -254,7 +254,7 @@ const Profile = () => {
                 </View>
             )}
             <View style={{ marginTop: insets.top, flex: 1 }}>
-                <Header title={"Profile"} rightIcon={Images?.logout} rightClick={loggingOut} />
+                <Header title={"Profile"} rightIcon={Images?.logout} rightClick={()=>{setShowLogoutPopUp(true)}} />
 
                 <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} style={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
 
