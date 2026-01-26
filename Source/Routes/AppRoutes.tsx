@@ -14,7 +14,8 @@ const AppRoutes : any = {
     VerificationScreen : "VerificationScreen",
     Terms : "Terms",
     PrivacyPolicy : "PrivacyPolicy",
-    EditProfile : "EditProfile"
+    EditProfile : "EditProfile",
+    SupportRequest : "SupportRequest"
 }
 
 export default AppRoutes

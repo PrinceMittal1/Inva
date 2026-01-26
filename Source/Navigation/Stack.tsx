@@ -20,6 +20,7 @@ import Terms from "../Screens/Terms";
 import PrivacyPolicy from "../Screens/PrivacyPolicy";
 import { logEvent } from "../Functions/EventFunction";
 import EditProfile from "../Screens/EditProfile";
+import SupportRequest from "../Screens/SupportRequest";
 
 const MainStack = () => {
     const Stack = createNativeStackNavigator();
@@ -61,6 +62,7 @@ const MainStack = () => {
                 <Stack.Screen name={keys?.productDetail} component={ProductDetail} />
                 <Stack.Screen name={keys.BottomBar} component={BottomTabs} />
                 <Stack.Screen name={keys?.PrivacyPolicy} component={PrivacyPolicy} />
+<Stack.Screen name={keys?.SupportRequest} component={SupportRequest} />
                 <Stack.Screen name={keys?.Terms} component={Terms} />
             </Stack.Navigator>
             {loading && <Loader />}</>

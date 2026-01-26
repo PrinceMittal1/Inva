@@ -275,87 +275,12 @@ const Profile = () => {
                         <Text style={styles.profileName}>{name}</Text>
                     </View>
 
-                    {/* <View style={[styles.inputContainer, {}]}>
-                        <Text style={styles.inputLabel}>Name</Text>
-                        <View style={styles?.dropdown}>
-                            <TextInput
-                                value={name}
-                                style={{ fontFamily: AppFonts.Regular, fontSize: 16 }}
-                                placeholder="name"
-                                placeholderTextColor={Colors?.DarkText}
-                                onChangeText={setName}
-                            />
-                        </View>
-                    </View>
-
-                    <View style={[styles.inputContainer, {}]}>
-                        <Text style={styles.inputLabel}>Select Your Age</Text>
-                        <Dropdown
-                            options={ageOptions}
-                            selectedValue={selected}
-                            onValueChange={setSelected}
-                        />
-                    </View>
-
-                    <View style={styles.dropdownWrapper}>
-                        <Text style={styles.inputLabel}>Interest</Text>
-                        <View style={styles.tagsContainer}>
-                            {selectedTags?.map((item, index) => (
-                                <RenderItemForSelectedProduct key={index} item={item} />
-                            ))}
-                        </View>
-                        <Dropdown
-                            options={["Saree", "Suits", "Toy gun", "Crockery", "Pants", "Shirts"]}
-                            selectedValue={""}
-                            alreadySelectedOptions={selectedTags}
-                            onValueChange={(item) => {
-                                let oldItems: any = [...selectedTags, item];
-                                setSelectedTags(oldItems);
-                            }}
-                            removeItem={(item: any) => {
-                                const newArr = selectedTags.filter((items: any) => items !== item);
-                                setSelectedTags(newArr)
-                            }}
-                        />
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Choose your gender</Text>
-                        <Dropdown
-                            options={['Female', 'Male']}
-                            selectedValue={selectedGender}
-                            onValueChange={setSelectedGender}
-                        />
-                    </View>
-
-                    <View style={[styles.dropdownWrapper, {}]}>
-                        <Text style={styles.inputLabel}>Select Your state</Text>
-                        <Dropdown
-                            options={states}
-                            selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ""}
-                            onValueChange={handleStateChange}
-                        />
-                    </View>
-
-                    <View style={[styles.dropdownWrapper]}>
-                        <Text style={styles.inputLabel}>Select Your City</Text>
-                        <Dropdown
-                            label="Select City"
-                            options={cities}
-                            selectedValue={selectedCity}
-                            onValueChange={setSelectedCity}
-                        />
-                    </View> */}
-
-                    {/* <View style={styles.flexSpacer} />
-
-                    <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} /> */}
-
 
                     <View style={styles.menuWrapper}>
                         <RenderItem item={{ title: 'Edit Profile', navigationTitle: AppRoutes?.EditProfile }} />
                         <RenderItem item={{ title: 'Terms', navigationTitle: AppRoutes?.Terms }} />
                         <RenderItem item={{ title: 'Privacy Policy', navigationTitle: AppRoutes?.PrivacyPolicy }} />
+                        <RenderItem item={{ title: 'Suggestion & Support', navigationTitle: AppRoutes?.SupportRequest }} />
                         <RenderItem item={{ title: 'Logout', navigationTitle: AppRoutes?.Terms }} onPress={() => {
                             setShowLogoutPopUp(true)
                         }} />

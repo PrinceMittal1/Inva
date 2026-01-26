@@ -12,11 +12,13 @@ import CommentModal from "../Components/Comments/CommentModal";
 import { hp, wp } from "../Keys/dimension";
 import Images from '../Keys/Images';
 import Colors from "../Keys/colors";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
 const SellerProfile = () => {
     const route: any = useRoute();
     const [sellerId, setSellerId] = useState('');
+        const insets = useSafeAreaInsets();
     const [sellerDetails, setSellerDetails] = useState<any>({});
     const [allProducts, setAllProducts] = useState<any>({});
     const { user_id } = useSelector((state: any) => state.userData);
@@ -149,7 +151,7 @@ const SellerProfile = () => {
 
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', marginTop: (statusBarHeight + 0) }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(233, 174, 160, 0.1)', paddingTop: insets.top }}>
             <Header
                 title={headerTitle}
                 rightIcon={Images?.chat}

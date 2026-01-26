@@ -51,6 +51,7 @@ const Login = () => {
                 phoneNumber: numberForLogin
             })
         } catch (error) {
+            console.log("error in login screen ----", error)
             logEvent("Login_InvaCst", {
                 event_action: 'login_with_phone',
                 successStatus: false,

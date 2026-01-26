@@ -24,7 +24,7 @@ export const creatingUserApi = async (payload: any) => {
     return response;
 
   } catch (e: any) {
-    console.log("response is ----- - + " , e)
+    console.log("response is ----- - + ", e)
     if (axios.isAxiosError(e)) {
       return [e.response?.status, e.response?.data];
     } else {
@@ -275,5 +275,27 @@ export const gettingIntersetsType = async (payload: any) => {
     return response;
   } catch (error: any) {
     // console.log("response is ----- gettingIntersetsType  ", error)
+  }
+};
+
+export const submittingSuggestion = async (payload: any) => {
+  try {
+    const response = await axios.post(
+      `${apiUrl}suggestion/support`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response;
+  } catch (e: any) {
+    console.log("response is ----- - + ", e)
+    if (axios.isAxiosError(e)) {
+      return [e.response?.status, e.response?.data];
+    } else {
+      console.log("Unexpected Error:", e);
+    }
   }
 };
