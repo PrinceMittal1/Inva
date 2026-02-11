@@ -2,7 +2,7 @@ module.exports = {
     project: {
         ios: {},
         android: {
-            packageName: "com.inva",
+            packageName: "com.invaID",
         }
     },
     assets: ['./assets/fonts'],

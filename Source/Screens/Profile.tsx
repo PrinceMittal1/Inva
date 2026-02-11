@@ -9,13 +9,15 @@ import {
     View,
     PermissionsAndroid,
     StyleSheet,
-    ActivityIndicator
+    ActivityIndicator,
+    TextInput,
+    ScrollView
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Dropdown from "../Components/DropDown";
 import { hp, wp } from "../Keys/dimension";
 import { useEffect, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import Images from "../Keys/Images";
 import ImageCropPicker from "react-native-image-crop-picker";
 import BottomButton from "../Components/BottomButton";
@@ -28,12 +30,15 @@ import { setUserData, setUserId } from "../Redux/Reducers/userData";
 import Geolocation from "@react-native-community/geolocation";
 import AppFonts from "../Functions/Fonts";
 import Colors from "../Keys/colors";
-import { updatingUser } from "../Apis";
+import { deleteUser, getUserProfile, updatingUserApi } from "../Apis";
+import { apiUrl } from "../env";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import DeleteConfirmation from "../Modal/DeleteConfirmation";
+import LogoutConfirmation from "../Modal/LogoutConfirmation";
 
 const { width, height } = Dimensions.get("window");
 
 const Profile = () => {
-    const statusBarHeight = Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0;
     const [profileImage, setProfileImage] = useState<any>(null);
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState("Kharar");
@@ -43,10 +48,17 @@ const Profile = () => {
         code: "PB",
         value: "Punjab"
     });
-    const [loader, setLoader] = useState(false)
+    const insets = useSafeAreaInsets();
+    const [selected, setSelected] = useState('18');
+    const [name, setName] = useState("");
+    const [selectedGender, setSelectedGender] = useState('Female');
     const [selectedTags, setSelectedTags] = useState([]);
+    const [loader, setLoader] = useState(false)
+    const ageOptions = Array.from({ length: 89 }, (_, i) => (i + 12).toString());
+    const focus = useIsFocused();
     const { user_id, userData } = useSelector((state: any) => state.userData);
-
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [showLogoutPopUp, setShowLogoutPopUp] = useState(false)
     const dispatch = useDispatch();
 
     async function reverseGeocode(lat: number, lng: number) {
@@ -89,22 +101,31 @@ const Profile = () => {
         );
     }
 
+    const fetchingUserDetail = async () => {
+        try {
+            setLoader(true)
+            const res = await getUserProfile({ user_id });
+            dispatch(setUserData(res?.data?.data));
+            setSelectedStateCode({
+                code: res?.data?.data?.stateCode,
+                value: res?.data?.data?.state
+            });
+            setName(res?.data?.data?.name)
+            setProfileImage(res?.data?.data?.profile_picture);
+            setSelectedTags(res?.data?.data?.interest);
+            setSelectedCity(res?.data?.data?.city);
+            setLoader(false)
+        } catch (error) {
+        } finally {
+            setLoader(false)
+        }
+    }
+
+
+
     useEffect(() => {
-        setLoader(true)
-        setSelectedStateCode({
-            code: userData?.stateCode,
-            value: userData?.state
-        });
-        setProfileImage(userData?.profile_picture);
-        setSelectedTags(userData?.interest);
-        setSelectedCity(userData?.city);
-        const indianStates = State.getStatesOfCountry("IN");
-        setStates(indianStates.map(s => `${s.name} (${s.isoCode})`));
-        const citiesList = City.getCitiesOfState("IN", userData?.stateCode ?? "PB");
-        setCities(citiesList.map(c => c.name));
-        getUserLocation();
-        setLoader(false)
-    }, [userData]);
+        fetchingUserDetail();
+    }, [focus]);
 
     const openGallery = () => {
         try {
@@ -123,44 +144,34 @@ const Profile = () => {
     };
 
     const ClickedOnContinue = async () => {
-        const fireUtils = useFireStoreUtil();
-        var profile_picture: any = profileImage;
-        if (profileImage?.path) {
-            profile_picture = await fireUtils.uploadMediaToFirebase(profileImage?.path);
-        }
-        // const ref: any = await fireUtils.updatingCustomerUserDetail({
-        //     user_id: user_id,
-        //     age: null,
-        //     gender: null,
-        //     stateCode: selectedStateCode?.code,
-        //     state: selectedStateCode?.value,
-        //     city: selectedCity,
-        //     profile_picture: profile_picture,
-        //     interest: selectedTags
-        // });
 
-        const ref = await updatingUser({
-            user_id: user_id,
-            age: null,
-            gender: null,
-            stateCode: selectedStateCode?.code,
-            state: selectedStateCode?.value,
-            city: selectedCity,
-            profile_picture: profile_picture,
-            interest: selectedTags
-        })
-
-
-        if (ref) {
-            dispatch(setUserData({
-                ...userData,
+        try {
+            setLoader(true)
+            const fireUtils = useFireStoreUtil();
+            var profile_picture: any = profileImage;
+            if (profileImage?.path) {
+                profile_picture = await fireUtils.uploadMediaToFirebase(profileImage?.path);
+            }
+            const ref = await updatingUserApi({
+                age: Number(selected),
+                _id: user_id,
+                gender: selectedGender.toLocaleLowerCase(),
                 stateCode: selectedStateCode?.code,
                 state: selectedStateCode?.value,
                 city: selectedCity,
                 profile_picture: profile_picture,
-                interest: selectedTags
-            }))
-            navigation.goBack();
+                interest: selectedTags,
+                name: name
+            })
+
+            if (ref?.status == 200) {
+                dispatch(setUserData(ref?.data?.userData))
+                navigation.goBack();
+            }
+        } catch (error) {
+
+        } finally {
+            setLoader(true)
         }
     };
 
@@ -199,6 +210,32 @@ const Profile = () => {
         );
     };
 
+    const onDeleting = async () => {
+        const res = await deleteUser({ user_id });
+        if (res?.status == 200) {
+            loggingOut();
+        }
+    }
+
+    const RenderItem = ({ item, onPress }: any) => {
+        console.log("data in render itme -- ", item, onPress)
+        return (
+            <Pressable
+                style={styles.menuItem}
+                onPress={onPress ? onPress : () => navigation.navigate(item?.navigationTitle)}
+            >
+                <Text>{item?.title}</Text>
+                <FastImage
+                    source={Images?.upArrow}
+                    style={styles.arrowIcon}
+                    tintColor={Colors?.buttonPrimaryColor}
+                    resizeMode="contain"
+                />
+            </Pressable>
+        )
+    }
+
+
     return (
         <>
             {loader && (
@@ -216,72 +253,57 @@ const Profile = () => {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
-                <Header title={"Profile"} rightIcon={Images?.logout} rightClick={loggingOut} />
+            <View style={{ marginTop: insets.top, flex: 1 }}>
+                <Header title={"Profile"} rightIcon={Images?.logout} rightClick={()=>{setShowLogoutPopUp(true)}} />
 
-                <View style={styles.profileImageWrapper}>
-                    <FastImage
-                        style={styles.profileImage}
-                        source={
-                            profileImage && !profileImage?.path
-                                ? { uri: profileImage }
-                                : !profileImage && !profileImage?.path
-                                    ? Images?.person
-                                    : { uri: profileImage.path }
-                        }
-                    />
-                    <Pressable onPress={openGallery}>
+                <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} style={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
+
+                    <View style={styles.profileImageWrapper}>
                         <FastImage
-                            source={Images?.EditForProductBlock}
-                            style={styles.editIcon}
-                            resizeMode="contain"
-                        />
-                    </Pressable>
-                </View>
-
-                <View style={[styles.dropdownWrapper, { marginTop: hp(3) }]}>
-                    <Text style={styles.inputLabel}>Select Your state</Text>
-                    <Dropdown
-                        options={states}
-                        selectedValue={selectedStateCode?.code ? `${selectedStateCode?.value}` : ""}
-                        onValueChange={handleStateChange}
-                    />
-                </View>
-
-                <View style={[styles.dropdownWrapper]}>
-                    <Text style={styles.inputLabel}>Select Your City</Text>
-                    <Dropdown
-                        label="Select City"
-                        options={cities}
-                        selectedValue={selectedCity}
-                        onValueChange={setSelectedCity}
-                    />
-                </View>
-
-                <View style={styles.dropdownWrapper}>
-                    <Text style={styles.inputLabel}>Interest</Text>
-                    <View style={styles.tagsContainer}>
-                        {selectedTags?.map((item, index) => (
-                            <RenderItemForSelectedProduct key={index} item={item} />
-                        ))}
-                    </View>
-                    <Dropdown
-                        options={["Saree", "Suits", "Toy gun", "Crockery", "Pants", "Shirts"]}
-                        selectedValue={""}
-                        barBorderColor={{ borderColor: "black", paddingVertical: 10 }}
-                        alreadySelectedOptions={selectedTags}
-                        onValueChange={item => {
-                            if (!selectedTags.includes(item)) {
-                                setSelectedTags([...selectedTags, item]);
+                            style={styles.profileImage}
+                            source={
+                                profileImage && !profileImage?.path
+                                    ? { uri: profileImage }
+                                    : !profileImage && !profileImage?.path
+                                        ? Images?.person
+                                        : { uri: profileImage.path }
                             }
+                        />
+                    </View>
+
+                    <View style={{ alignSelf: 'center' }}>
+                        <Text style={styles.profileName}>{name}</Text>
+                    </View>
+
+
+                    <View style={styles.menuWrapper}>
+                        <RenderItem item={{ title: 'Edit Profile', navigationTitle: AppRoutes?.EditProfile }} />
+                        <RenderItem item={{ title: 'Terms', navigationTitle: AppRoutes?.Terms }} />
+                        <RenderItem item={{ title: 'Privacy Policy', navigationTitle: AppRoutes?.PrivacyPolicy }} />
+                        <RenderItem item={{ title: 'Suggestion & Support', navigationTitle: AppRoutes?.SupportRequest }} />
+                        <RenderItem item={{ title: 'Logout', navigationTitle: AppRoutes?.Terms }} onPress={() => {
+                            setShowLogoutPopUp(true)
+                        }} />
+                        <RenderItem item={{ title: 'Delete Account' }} onPress={() => {
+                            setShowDeleteModal(true)
+                        }} />
+                    </View>
+
+                    {showDeleteModal &&
+                        <DeleteConfirmation visible={showDeleteModal} confimation={onDeleting} onClosePress={() => setShowDeleteModal(false)} message={"Are you sure you want to delete this account"} />
+                    }
+                    {
+                        showLogoutPopUp &&
+                        <LogoutConfirmation 
+                        confimation={loggingOut} 
+                        onClosePress={()=>{
+                            setShowLogoutPopUp(false)
                         }}
-                    />
-                </View>
+                        />
+                    }
 
-                <View style={styles.flexSpacer} />
-
-                <BottomButton btnStyle={styles.bottomButton} title={"Continue"} clickable={ClickedOnContinue} />
-            </SafeAreaView>
+                </KeyboardAwareScrollView>
+            </View>
         </>
     );
 };
@@ -306,6 +328,9 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 1,
         borderColor: "grey"
+    },
+    scrollContainer: {
+        flex: 1
     },
     editIcon: {
         width: 30,
@@ -334,6 +359,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#e0dedd',
         borderRadius: 10
     },
+    profileName: {
+        fontFamily: AppFonts.Bold,
+        fontSize: 16
+    },
     tagRemoveButton: {
         paddingHorizontal: 5
     },
@@ -354,4 +383,41 @@ const styles = StyleSheet.create({
         marginLeft: wp(1),
         color: Colors?.DarkText
     },
+    inputContainer: {
+        width: width * 0.9,
+        alignSelf: 'center',
+        marginTop: hp(1)
+    },
+    dropdown: {
+        paddingHorizontal: 12,
+        height: wp(12),
+        borderWidth: 1,
+        justifyContent: 'center',
+        borderColor: Colors?.buttonPrimaryColor,
+        borderRadius: 8,
+    },
+    menuWrapper: {
+        borderWidth: 1,
+        width: wp(90),
+        alignSelf: 'center',
+        borderColor: Colors.buttonPrimaryColor,
+        borderRadius: wp(2),
+        marginTop: wp(2)
+    },
+    menuItem: {
+        borderBottomWidth: 1,
+        flexDirection: 'row',
+        height: wp(12),
+        width: wp(90),
+        borderColor: Colors?.buttonPrimaryColor,
+        alignSelf: 'center',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: wp(3),
+    },
+    arrowIcon: {
+        width: wp(5),
+        height: wp(5),
+        transform: [{ rotate: '90deg' }],
+    }
 });

@@ -99,15 +99,12 @@ const CommentBlocks = ({ item, index, onCrossPress, onReplyPress, deletingCommen
       month: "short",
       year: "numeric",
     };
-    return date.toLocaleDateString("en-US", options); // e.g., Jul 05, 2025
+    return date.toLocaleDateString("en-US", options);
   };
-
   return (
     <>
       <View style={styles.mainView}>
-        <Pressable onPress={() => {
-          onCrossPress();
-        }}>
+        <Pressable style={{borderWidth:1, borderColor:'black', height: 38, width: 38, borderRadius:19, justifyContent:'center', alignItems:'center'}}>
           <FastImage
             source={itemSaved?.profile_picture ? { uri: itemSaved?.profile_picture } : Images.person}
             style={styles.userIcon}
@@ -115,7 +112,7 @@ const CommentBlocks = ({ item, index, onCrossPress, onReplyPress, deletingCommen
           />
         </Pressable>
         <View style={{ marginLeft: 10, width: "87%" }}>
-          <Text maxFontSizeMultiplier={1.5} style={styles.name}>{itemSaved?.name}</Text>
+          <Text maxFontSizeMultiplier={1.5} style={styles.name}>{itemSaved?.sellerName ? `${itemSaved?.sellerName}(Seller)` : itemSaved?.name ? `${itemSaved?.name}` : ''}</Text>
           <Text maxFontSizeMultiplier={1.2} style={styles.comment}>{itemSaved?.comment}</Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>

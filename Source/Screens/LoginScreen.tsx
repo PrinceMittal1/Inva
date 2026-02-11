@@ -1,31 +1,31 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { SafeAreaView, StyleSheet, View, TouchableOpacity, Text, Image, Dimensions, TextInput, Pressable, Platform, StatusBar, Alert, ActivityIndicator } from "react-native"
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from "@react-native-firebase/auth";
-import useFireStoreUtil from "../Functions/FireStoreUtils";
 import Images from "../Keys/Images";
 import { hp, wp } from "../Keys/dimension";
 import { useNavigation } from "@react-navigation/native";
 import AppRoutes from "../Routes/AppRoutes";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData, setUserId } from "../Redux/Reducers/userData";
-import FireKeys from "../Functions/FireKeys";
-import firestore from "@react-native-firebase/firestore";
 import AppFonts from "../Functions/Fonts";
 import Colors from "../Keys/colors";
 import FastImage from "@d11/react-native-fast-image";
+import { creatingUserApi } from "../Apis";
+import { FirebaseApp, getApps, initializeApp } from "firebase/app";
+import { logEvent } from "../Functions/EventFunction";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { SafeAreaInsetsContext, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get('window');
 
 const Login = () => {
     const [numberForLogin, setNumberForLogin] = useState("");
-    const navigation = useNavigation();
-    const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
+    const navigation = useNavigation() as any;
+    const insets = useSafeAreaInsets();
+    const statusBarHeight = insets.top
     const dispatch = useDispatch();
     const [loader, setLoader] = useState(false)
-    const [confirm, setConfirm] = useState<any>(null);
-    const [code, setCode] = useState('');
-    const loading = useSelector((state: any) => state.tempData.loader);
     const { user_id } = useSelector((state: any) => state.userData);
 
     GoogleSignin.configure({
@@ -45,8 +45,18 @@ const Login = () => {
                 confimration: confirmation,
                 phoneNumber: numberForLogin
             })
+            logEvent("Login_InvaCst", {
+                event_action: 'login_with_phone',
+                successStatus: true,
+                phoneNumber: numberForLogin
+            })
         } catch (error) {
-            console.log('Phone Sign-In Error:', error);
+            console.log("error in login screen ----", error)
+            logEvent("Login_InvaCst", {
+                event_action: 'login_with_phone',
+                successStatus: false,
+                phoneNumber: numberForLogin
+            })
         }
         setLoader(false)
     };
@@ -56,7 +66,8 @@ const Login = () => {
         try {
             await GoogleSignin.signOut();
             await auth().signOut();
-        } catch (error: any) { }
+        } catch (error: any) {
+        }
 
         try {
             const data: any = (await GoogleSignin.signIn()) || {};
@@ -64,40 +75,35 @@ const Login = () => {
                 const googleCredential = auth?.GoogleAuthProvider.credential(data?.data?.idToken);
                 const res = await auth().signInWithCredential(googleCredential);
                 const additionalUserInfo: any = res.additionalUserInfo ?? {};
-
                 if (additionalUserInfo?.profile?.email) {
-                    const customerUserRef = firestore().collection(FireKeys.CustomerUser);
-                    const existingUserSnap = await customerUserRef.where('email', '==', additionalUserInfo?.profile?.email).limit(1).get();
-                    const existingDoc: any = existingUserSnap.docs[0];
-
-                    if (existingDoc?.id) {
-                        dispatch(setUserId(existingDoc?._data?.user_id));
-                        dispatch(setUserData({
-                            user_id: existingDoc?._data?.user_id,
-                            age: existingDoc?._data?.age,
-                            name: existingDoc?._data?.name,
-                            gender: existingDoc?._data?.gender,
-                            state: existingDoc?._data?.state,
-                            stateCode: existingDoc?._data?.stateCode,
-                            city: existingDoc?._data?.city
-                        }));
+                    let data = {
+                        profile_picture: additionalUserInfo?.profile?.picture,
+                        name: additionalUserInfo?.profile?.name,
+                        email: additionalUserInfo?.profile?.email
+                    }
+                    const res: any = await creatingUserApi(data)
+                    // console.log("res on login is --- ", res?.data?.user)
+                    if (res?.status == 201) {
+                        dispatch(setUserId(res?.data?.user?._id));
                         navigation.replace(AppRoutes?.BottomBar);
-                    } else {
-                        const fireUtils = useFireStoreUtil();
-                        const user_id = await fireUtils.creatingCustomerUser(
-                            additionalUserInfo?.profile?.picture,
-                            additionalUserInfo?.profile?.name,
-                            additionalUserInfo?.profile?.email,
-                            ""
-                        );
-                        if (user_id) {
-                            dispatch(setUserId(user_id));
-                            navigation.navigate(AppRoutes?.ScreenForUserDetail);
-                        }
+                        dispatch(setUserData(res?.data?.user))
+                    }else if (res?.status == 200) {
+                        dispatch(setUserId(res?.data?.user?._id));
+                        navigation.navigate(AppRoutes?.ScreenForUserDetail);
+                        logEvent("Login_InvaCst", {
+                            event_action: 'login_with_google',
+                            successStatus: true
+                        })
                     }
                 }
             }
-        } catch (error) { }
+        } catch (error) {
+            logEvent("Login_InvaCst", {
+                event_action: 'login_with_google',
+                successStatus: false
+            })
+            console.log("error while logging out is ------ ", error)
+        }
         finally {
             setLoader(false)
         }
@@ -120,47 +126,69 @@ const Login = () => {
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
             )}
-            <SafeAreaView style={[styles.safeArea, { marginTop: statusBarHeight }]}>
-                <View style={styles.logoWrapper}>
-                    <Image source={Images.logoForInva} style={styles.logo} resizeMode="contain" />
-                </View>
-
-                <View style={styles.welcomeWrapper}>
-                    <Text style={styles.welcomeTitle}>Welcome to Inva</Text>
-                    <Text style={styles.welcomeSubtitle}>Sign in to explore</Text>
-                </View>
-
-                <View style={styles.card}>
-                    <Text style={styles.label}>Phone Number</Text>
-                    <View style={styles.inputWrapper}>
-                        <TextInput
-                            value={numberForLogin}
-                            placeholder="Phone Number"
-                            placeholderTextColor={Colors?.DarkText}
-                            maxLength={10}
-                            style={styles.input}
-                            onChangeText={setNumberForLogin}
-                            onSubmitEditing={signInWithPhoneNumber}
-                            keyboardType="numeric"
-                        />
+            <KeyboardAwareScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            style={{
+                flex:1,
+                marginTop: statusBarHeight,
+                marginBottom : insets?.bottom,
+            }}>
+                <View style={{ flex: 1, backgroundColor: Colors?.PrimaryBackground, }}>
+                    <View style={styles.logoWrapper}>
+                        <Image source={Images.logoForInva} style={styles.logo} resizeMode="contain" />
                     </View>
 
-                    <Pressable onPress={signInWithPhoneNumber} style={styles.submitButton}>
-                        <Text style={styles.submitButtonText}>Submit</Text>
-                    </Pressable>
+                    <View style={styles.welcomeWrapper}>
+                        <Text style={styles.welcomeTitle}>Welcome to Inva</Text>
+                        <Text style={styles.welcomeSubtitle}>Sign in to explore</Text>
+                    </View>
 
-                    <View style={styles.orCircle}>
-                        <Text>OR</Text>
+                    <View style={styles.card}>
+                        <Text style={styles.label}>Phone Number</Text>
+                        <View style={styles.inputWrapper}>
+                            <TextInput
+                                value={numberForLogin}
+                                placeholder="Phone Number"
+                                placeholderTextColor={Colors?.DarkText}
+                                maxLength={10}
+                                style={styles.input}
+                                onChangeText={setNumberForLogin}
+                                onSubmitEditing={signInWithPhoneNumber}
+                                keyboardType="numeric"
+                            />
+                        </View>
+
+                        <Pressable onPress={signInWithPhoneNumber} style={styles.submitButton}>
+                            <Text style={styles.submitButtonText}>Submit</Text>
+                        </Pressable>
+
+                        <View style={styles.orCircle}>
+                            <Text>OR</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.socialCard}>
+                        <Pressable onPress={onGoogleButtonPress} style={styles.googleButton}>
+                            <FastImage source={Images?.googleLogo} style={styles.googleIcon} />
+                            <Text style={styles.googleButtonText}>Continue with Google</Text>
+                        </Pressable>
+                    </View>
+
+                    <View style={{ flex: 1}} />
+
+                    <View style={{ position: 'absolute', bottom: wp(5), alignSelf: 'center', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Pressable onPress={() => navigation.navigate(AppRoutes?.Terms)}>
+                            <Text style={{ textDecorationLine: 'underline', textDecorationColor: 'black', fontSize: 14, fontFamily: AppFonts.Regular }}>Term & Condition</Text>
+                        </Pressable>
+
+                        <Text style={{ fontSize: 14, fontFamily: AppFonts.Regular, marginHorizontal: wp(1.5) }}>&</Text>
+
+                        <Pressable onPress={() => navigation.navigate(AppRoutes?.PrivacyPolicy)}>
+                            <Text style={{ textDecorationLine: 'underline', textDecorationColor: 'black', fontSize: 14, fontFamily: AppFonts.Regular }}>Privacy Policy</Text>
+                        </Pressable>
                     </View>
                 </View>
-
-                <View style={styles.socialCard}>
-                    <Pressable onPress={onGoogleButtonPress} style={styles.googleButton}>
-                        <FastImage source={Images?.googleLogo} style={styles.googleIcon} />
-                        <Text style={styles.googleButtonText}>Continue with Google</Text>
-                    </Pressable>
-                </View>
-            </SafeAreaView>
+            </KeyboardAwareScrollView>
         </>
     );
 };

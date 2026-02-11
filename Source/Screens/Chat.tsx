@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native"
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StatusBar, Text, TextInput, TouchableWithoutFeedback, View } from "react-native"
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import Images from "../Keys/Images";
@@ -10,11 +10,10 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import log from "../Functions/logs";
 import { useDispatch, useSelector } from "react-redux";
 import ImageCropPicker from "react-native-image-crop-picker";
-import { setLoader } from "../Redux/Reducers/tempData";
 import RNFS from 'react-native-fs';
 import storage from '@react-native-firebase/storage';
 import FastImage from "@d11/react-native-fast-image";
-
+import { Image } from 'react-native-compressor';
 
 const PAGE_SIZE = 15;
 const Chat = () => {
@@ -28,25 +27,60 @@ const Chat = () => {
         total: 1,
         state: false
     })
+    const sendingLock = useRef(false);
     const [chatRoomRef, setChatRoomRef] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
-    const { user_id } = useSelector((state: any) => state.userData);
+    const { user_id, userData } = useSelector((state: any) => state.userData);
     const [lastDoc, setLastDoc] = useState(null);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [loader, setLoader] = useState(false);
     const firstPageLoaded = useRef(false);
     const [textMessage, setTextMessage] = useState('')
     const navigation = useNavigation();
     const [images1, setImages] = useState<any>([]);
     const insets = useSafeAreaInsets();
+    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
     const initalisingChat = async () => {
-        const result = await fireUtils?.createOrGetChatRoom(route?.params?.sellerId, route?.params?.user_id);
+        const result = await fireUtils?.createOrGetChatRoom(route?.params?.sellerId, route?.params?.sellerDisplayName, route?.params?.seller_profile, route?.params?.user_id, userData?.name, userData?.profile_picture);
         setChatRoomRef(result);
     }
 
     useEffect(() => {
         initalisingChat();
     }, [])
+
+    const compressImage = async (uri: string) => {
+        try {
+            const compressedUri = await Image.compress(uri, {
+                maxWidth: 1024,
+                maxHeight: 1024,
+                quality: 0.65,   // 65% quality — WhatsApp level
+            });
+
+            return compressedUri; // new compressed file path
+        } catch (error) {
+            console.log("Compression error:", error);
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        const showSub = Keyboard.addListener('keyboardDidShow', () => {
+            setIsKeyboardOpen(true);
+        });
+
+        const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+            setIsKeyboardOpen(false);
+        });
+
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, []);
+
+    // console.log("detail on tha page si====== ", route?.params?.seller_profile)
 
     useEffect(() => {
         if (!chatRoomRef) return;
@@ -87,7 +121,7 @@ const Chat = () => {
 
     const uploadMediaToFirebase = async (data: any, currentNumber: any, totalNumber: any) => {
         try {
-            const uri = data;
+            const uri = await compressImage(data);
             if (!uri) throw new Error("No file URI");
             const fileName = `file_${Date.now()}.jpg`;
             const pathToFile = Platform.OS === 'ios' ? uri.replace('file://', '') : uri.replace('file://', '');
@@ -118,16 +152,28 @@ const Chat = () => {
     };
 
     const sendingMessageToBackend = async () => {
-        if (images1.length > 0) {
-            sendingImagesTobackend();
-        } else {
-            let textMessageDummy = textMessage;
-            setTextMessage('')
-            const res = await fireUtils?.sendMessageToRoom(chatRoomRef, route?.params?.user_id, textMessageDummy, [])
-            if (res) {
+        if (sendingLock.current) return;
+        sendingLock.current = true
+
+
+        try {
+            if (images1.length > 0) {
+                setLoader(true)
+                await sendingImagesTobackend();
+            } else {
+                let textMessageDummy = textMessage;
                 setTextMessage('')
-                setImages([])
+                const res = await fireUtils?.sendMessageToRoom(chatRoomRef, route?.params?.user_id, textMessageDummy, [])
+                if (res) {
+                    setTextMessage('')
+                    setImages([])
+                }
             }
+        } catch (error) {
+
+        } finally {
+            setLoader(false)
+            sendingLock.current = false
         }
     }
 
@@ -155,7 +201,7 @@ const Chat = () => {
         } catch (error) {
             console.error("⚠️ Catch Error:", error);
         } finally {
-            dispatch(setLoader(false));
+            setLoader(false)
         }
     };
 
@@ -198,11 +244,11 @@ const Chat = () => {
                 }}
             >
                 <FlatList data={item?.imagesUrl}
-                renderItem={(items : any)=>{
-                    return(
-                        <FastImage source={{uri : `${items?.item}`}} style={{width:wp(55), height:wp(45), marginBottom:hp(1)}} resizeMode="cover"/>
-                    )
-                }}/>
+                    renderItem={(items: any) => {
+                        return (
+                            <FastImage source={{ uri: `${items?.item}` }} style={{ width: wp(55), height: wp(45), marginBottom: hp(1) }} resizeMode="cover" />
+                        )
+                    }} />
                 <Text>{item.text}</Text>
             </View>
         )
@@ -232,21 +278,42 @@ const Chat = () => {
         )
     }
 
+    const headerTitle = useMemo(() => {
+        return (route?.params?.sellerDisplayName && route?.params?.sellerDisplayName?.length > 0) ? route?.params?.sellerDisplayName : 'Seller'
+    }, [route?.params?.sellerDisplayName])
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + hp(1) : 0}
-            >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <>
-                        <Header title={'Search'} showbackIcon={true} />
+        <>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
+                </View>
+            )}
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior="padding"
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : isKeyboardOpen ? -hp(4) : -hp(0)}
+                >
+
+                    <Header title={headerTitle} showbackIcon={true} />
+
+                    <View style={{ flex: 1 }}>
 
                         <FlatList
                             style={{ flex: 1 }}
                             data={messages}
-                            contentContainerStyle={{ padding: 10, paddingBottom: hp(12) }}
+                            contentContainerStyle={{ padding: 10, paddingBottom: hp(6) }}
                             keyExtractor={(item, index) => `${item.id}_${index}`}
                             renderItem={RenderItem}
                             inverted
@@ -255,15 +322,14 @@ const Chat = () => {
                             ListFooterComponent={() =>
                                 loadingMore ? <ActivityIndicator size="small" color="#000" /> : null
                             }
+                            keyboardShouldPersistTaps="handled"
                         />
 
                         <View
                             style={{
                                 paddingHorizontal: 10,
                                 paddingVertical: 8,
-                                width: wp(100),
                                 backgroundColor: '#f1f1f1',
-                                alignItems: 'center',
                                 borderTopWidth: 1,
                                 borderColor: '#ccc',
                             }}
@@ -274,6 +340,7 @@ const Chat = () => {
                                 style={{ alignSelf: 'flex-start' }}
                                 renderItem={RenderItemForUploadingImage}
                             />
+
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <View style={{
                                     flex: 1,
@@ -291,8 +358,7 @@ const Chat = () => {
                                         value={textMessage}
                                         onChangeText={setTextMessage}
                                         placeholder="Type a message..."
-                                        style={{
-                                        }}
+                                        style={{ flex: 1 }}
                                         onSubmitEditing={sendingMessageToBackend}
                                     />
 
@@ -300,7 +366,6 @@ const Chat = () => {
                                         <FastImage source={Images?.attach} style={{ width: wp(5), height: wp(5) }} resizeMode="contain" />
                                     </Pressable>
                                 </View>
-
 
                                 <Pressable
                                     onPress={sendingMessageToBackend}
@@ -316,10 +381,11 @@ const Chat = () => {
                                 </Pressable>
                             </View>
                         </View>
-                    </>
-                </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+
+                    </View>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </>
     )
 }
 

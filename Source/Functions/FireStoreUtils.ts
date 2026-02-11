@@ -4,6 +4,7 @@ import moment from "moment";
 import { Platform } from "react-native";
 import storage from '@react-native-firebase/storage';
 import RNFS from 'react-native-fs';
+import { Image } from 'react-native-compressor';
 
 export default function useFireStoreUtil() {
 
@@ -111,10 +112,24 @@ export default function useFireStoreUtil() {
         }
     };
 
+        const compressImage = async (uri: string) => {
+  try {
+    const compressedUri = await Image.compress(uri, {
+      maxWidth: 1024,
+      maxHeight: 1024,
+      quality: 0.65,   // 65% quality — WhatsApp level
+    });
+
+    return compressedUri; // new compressed file path
+  } catch (error) {
+    console.log("Compression error:", error);
+    return null;
+  }
+};
 
     const uploadMediaToFirebase = async (data: any) => {
         try {
-            const uri = data;
+            const uri = await compressImage(data);
             if (!uri) throw new Error("No file URI");
             const fileName = `file_${Date.now()}.jpg`;
             const pathToFile = Platform.OS === 'ios' ? uri.replace('file://', '') : uri.replace('file://', '');
@@ -548,7 +563,7 @@ export default function useFireStoreUtil() {
                 .collection(FireKeys.Comment)
                 .doc(productId)
                 .collection("List")
-                .orderBy("createdAt", "desc") // optional: latest first
+                .orderBy("createdAt", "desc")
                 .get();
 
             const comments = response.docs.map((doc) => ({
@@ -556,7 +571,6 @@ export default function useFireStoreUtil() {
                 ...doc.data(),
             }));
 
-            console.log("✅ All comments: ------- in firebase", comments);
             return comments;
         } catch (error) {
             console.error("❌ Error getting comments:", error);
@@ -596,7 +610,6 @@ export default function useFireStoreUtil() {
                 })
             );
 
-            console.log("✅ All comments with replies:", comments);
             return comments;
         } catch (error) {
             console.error("❌ Error getting comments with replies:", error);
@@ -604,22 +617,28 @@ export default function useFireStoreUtil() {
         }
     };
 
-    const createOrGetChatRoom = async (sellerId: string, customerId: string) => {
+    const createOrGetChatRoom = async (sellerId: string,seller_name:string, seller_profile : string, customerId: string,customer_name = '', customer_profile : string) => {
         const chatRoomId = sellerId + '_' + customerId;
         const chatRoomRef = firestore().collection('Chats').doc(chatRoomId);
-
         const chatDoc = await chatRoomRef.get();
-
-        if (!chatDoc.exists) {
-            await chatRoomRef.set({
-                sellerId: sellerId,
-                customerId: customerId,
-                unseenMessages: 0,
-                lastMessage: '',
-                lastUpdated: firestore.FieldValue.serverTimestamp(),
-            });
+        if (!chatDoc.exists()) {
+            try {
+                await chatRoomRef.set({
+                    sellerId,
+                    seller_name,
+                    seller_profile,
+                    customerId,
+                    customer_name,
+                    customer_profile,
+                    unseenMessages: 0,
+                    lastMessage: '',
+                    lastUpdated: firestore.FieldValue.serverTimestamp(),
+                });
+                console.log("✅ Chat room created:", chatRoomId);
+            } catch (err) {
+                console.error("🔥 Error creating chat room:", err);
+            }
         }
-
         return chatRoomRef;
     };
 
@@ -668,14 +687,18 @@ export default function useFireStoreUtil() {
                 timestamp: firestore.FieldValue.serverTimestamp(),
             };
         }
-
         await chatRoomRef.collection('messages').add(messageData);
-
-
-        await chatRoomRef.update({
-            lastMessage: text,
-            lastUpdated: firestore.FieldValue.serverTimestamp(),
-        });
+        try {
+            await chatRoomRef.set(
+                {
+                    lastMessage: text,
+                    lastUpdated: firestore.FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+            );
+        } catch (err) {
+            console.error("🔥 Error updating chat room:", err);
+        }
 
         return true
     };

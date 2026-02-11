@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native"
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import Header from "../Components/Header";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../Keys/colors";
@@ -9,7 +9,10 @@ import AppFonts from "../Functions/Fonts";
 import AppRoutes from "../Routes/AppRoutes";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import { useDispatch } from "react-redux";
-import { setUserId } from "../Redux/Reducers/userData";
+import { setUserData, setUserId } from "../Redux/Reducers/userData";
+import { creatingUserApi } from "../Apis";
+import { apiUrl } from "../env";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const VerificationScreen = () => {
     const insets = useSafeAreaInsets();
@@ -17,6 +20,7 @@ const VerificationScreen = () => {
     const [otpValue, SetOtpValue] = useState('');
     const navigation = useNavigation();
     const dispatch = useDispatch();
+    const [loader, setLoader] = useState(false)
     const confirm = route?.params?.confimration
     const phoneNumber = route?.params?.phoneNumber
 
@@ -26,59 +30,87 @@ const VerificationScreen = () => {
             return
         }
         try {
+            setLoader(true)
             await confirm.confirm(otpValue);
-
-            const fireUtils = useFireStoreUtil();
-            const user_id = await fireUtils.creatingCustomerUser(
-                '',
-                '',
-                '',
-                phoneNumber
-            );
-            if (user_id) {
-                dispatch(setUserId(user_id));
-                navigation.navigate(AppRoutes?.ScreenForUserDetail);
+            let data = {
+                phoneNumber: phoneNumber
             }
-            navigation.navigate(AppRoutes?.ScreenForUserDetail);
+            const res: any = await creatingUserApi(data)
+            console.log("res for creatingUserApi", res)
+            if (res?.status == 201) {
+                dispatch(setUserId(res?.data?.user?._id));
+                navigation.replace(AppRoutes?.BottomBar);
+                dispatch(setUserData(res?.data?.user))
+            } else if (res?.status == 200) {
+                dispatch(setUserId(res?.data?.user?._id));
+                navigation.navigate(AppRoutes?.ScreenForUserDetail);
+            }else{
+                Alert.alert("Invalid code")
+            }
         } catch (error) {
+            setLoader(false)
             console.log('Invalid code.', error);
         }
     };
 
 
     return (
-        <View style={{
-            flex: 1,
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-            backgroundColor: Colors?.PrimaryBackground,
-        }}>
-            <Header />
-
-            <View style={{ width: wp(90), alignSelf: 'center', alignItems: 'center', marginVertical: hp(2) }}>
-                <Text style={{ textAlign: 'center', marginHorizontal: wp(5), fontFamily: AppFonts.Regular, fontSize: 15, lineHeight: 22 }}>Please verify your phone number by adding 6 digit OTP</Text>
-
-                <View style={{ borderWidth: 1, borderColor: Colors?.buttonPrimaryColor, width: wp(90), borderRadius: 10, height: 45, marginTop: hp(2) }}>
-                    <TextInput
-                        value={otpValue}
-                        maxLength={6}
-                        keyboardType="numeric"
-                        placeholder="Otp"
-                        style={styles.input}
-                        placeholderTextColor={Colors?.DarkText}
-                        onChangeText={SetOtpValue}
-                    />
+        <>
+            {loader && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 999
+                }}>
+                    <ActivityIndicator size="large" color="#fff" />
                 </View>
+            )}
+            <View style={{
+                flex: 1,
+                paddingTop: insets.top,
+                paddingBottom: insets.bottom,
+                backgroundColor: Colors?.PrimaryBackground,
+            }}>
+                <Header title={'Verify'} />
+
+                <KeyboardAwareScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    style={{
+                        flex: 1,
+                    }}>
+
+                    <View style={{ width: wp(90), alignSelf: 'center', alignItems: 'center', marginVertical: hp(2) }}>
+                        <Text style={{ textAlign: 'center', marginHorizontal: wp(5), fontFamily: AppFonts.Regular, fontSize: 15, lineHeight: 22 }}>Please verify your phone number by adding 6 digit OTP</Text>
+
+                        <View style={{ borderWidth: 1, borderColor: Colors?.buttonPrimaryColor, width: wp(90), borderRadius: 10, height: 45, marginTop: hp(2) }}>
+                            <TextInput
+                                value={otpValue}
+                                maxLength={6}
+                                keyboardType="numeric"
+                                placeholder="Otp"
+                                style={styles.input}
+                                placeholderTextColor={Colors?.DarkText}
+                                onChangeText={SetOtpValue}
+                            />
+                        </View>
+                    </View>
+
+                    <View style={{ flex: 1 }} />
+
+                    <Pressable onPress={confirmCode} style={styles.submitButton}>
+                        <Text style={styles.submitButtonText}>Submit</Text>
+                    </Pressable>
+
+                </KeyboardAwareScrollView>
+
             </View>
-
-            <View style={{ flex: 1 }} />
-
-            <Pressable onPress={confirmCode} style={styles.submitButton}>
-                <Text style={styles.submitButtonText}>Submit</Text>
-            </Pressable>
-
-
-        </View>
+        </>
     )
 }
 

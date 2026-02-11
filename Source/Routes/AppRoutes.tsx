@@ -1,4 +1,4 @@
-const AppRoutes = {
+const AppRoutes : any = {
     Login: "Login",
     Splash: "Splash",
     ScreenForUserDetail: "ScreenForUserDetail",
@@ -11,7 +11,11 @@ const AppRoutes = {
     ChatListing : "ChatListing",
     Chat : "Chat",
     productDetail : "productDetail",
-    VerificationScreen : "VerificationScreen"
+    VerificationScreen : "VerificationScreen",
+    Terms : "Terms",
+    PrivacyPolicy : "PrivacyPolicy",
+    EditProfile : "EditProfile",
+    SupportRequest : "SupportRequest"
 }
 
 export default AppRoutes

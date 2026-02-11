@@ -74,7 +74,7 @@ import useFireStoreUtil from "../../Functions/FireStoreUtils";
             />
           </Pressable>
           <View style={{ marginLeft: 10, width:"84%" }}>
-            <Text maxFontSizeMultiplier={1.5} style={styles.name}>{itemSaved?.name}</Text>
+            <Text maxFontSizeMultiplier={1.5} style={styles.name}>{itemSaved?.sellerName ? `${itemSaved?.sellerName}(Seller)` : itemSaved?.name ? `${itemSaved?.name}` : ''}</Text>
             <Text maxFontSizeMultiplier={1.2} style={styles.comment}>{itemSaved?.comment}</Text>
             
             <View style={{flexDirection:'column', alignItems:'flex-start'}}>

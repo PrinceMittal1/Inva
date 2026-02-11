@@ -1,15 +1,17 @@
 import {
+    ActivityIndicator,
     Dimensions,
     FlatList,
     Image,
     Platform,
     Pressable,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import FastImage from "@d11/react-native-fast-image";
 import "moment/locale/es";
@@ -23,7 +25,7 @@ import Images from "../Keys/Images";
 import useFireStoreUtil from "../Functions/FireStoreUtils";
 import Colors from "../Keys/colors";
 import AppFonts from "../Functions/Fonts";
-import { toggleLike } from "../Apis";
+import { followSeller, toggleLike, toggleSaved } from "../Apis";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -32,13 +34,13 @@ const ProductBlock = ({
     showFollowButton = true,
     showShopName = true,
     onCommentPress,
-    onSharePress,
     onSavePress,
     statusChangingForFollow
 }: any) => {
     const styles = useStyles();
     const [blockItem, setBlockItem] = useState(item);
     const navigation = useNavigation() as any;
+    const [savingState, setSavingState] = useState(false)
     const { user_id } = useSelector((state: any) => state.userData);
     const [activeIndex2, setActiveIndex2] = useState(0);
 
@@ -49,41 +51,81 @@ const ProductBlock = ({
         return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
     };
 
+    const onSharePress = async () => {
+        try {
+            const result = await Share.share({
+                message:
+                    `Hey! 👋 Check out this product on Inva App — ❤️\nDownload now: https://invaid.onelink.me/RukT/us6cjqc2?product_id=${blockItem?._id}`,
+                title: 'Invite to Inva 💫',
+            });
+
+            if (result.action === Share.sharedAction) {
+                if (result.activityType) {
+                    console.log('Shared via:', result.activityType);
+                } else {
+                    console.log('Shared successfully');
+                }
+            } else if (result.action === Share.dismissedAction) {
+                console.log('Share dismissed');
+            }
+        } catch (error) {
+            console.log('Error sharing:', error);
+        }
+    }
+
     const formatingDate = (timestamp: any) => {
-        const date = new Date(timestamp * 1000);
-        const options: any = { day: '2-digit', month: 'short', year: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
+        const date = new Date(timestamp);
+
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "2-digit",
+            })
+            .replace(/\//g, "-");
     };
 
     const toggleFollowInSubcollections = async () => {
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.toggleFollowInSubcollection(blockItem?.user_id, user_id);
-        statusChangingForFollow(blockItem?.user_id, !!result);
+        try {
+            const res = await followSeller(user_id, blockItem?.sellerId)
+            if (res?.status == 201) {
+                setBlockItem({ ...blockItem, followed: false })
+            } else if (res?.status == 200) {
+                statusChangingForFollow()
+                setBlockItem({ ...blockItem, followed: true })
+            }
+        } catch (error) {
+        }
     };
 
     const toggleSavingCollection = async () => {
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.toggleSavingInWishlist(user_id, blockItem?.id);
-        onSavePress(blockItem?.id, !!result);
+        try {
+            setSavingState(true)
+            let product_id = blockItem?._id
+            let res = await toggleSaved({ product_id, user_id })
+            if (res?.status == 200) {
+                onSavePress(product_id, res?.data?.message == 'Product saved' ? true : false);
+            }
+        } catch (error) {
+
+        } finally {
+            setSavingState(false)
+        }
     };
 
     const LikingProduct = async () => {
         setBlockItem(prev => ({
             ...prev,
-            isLiked: !prev.isLiked,
-            likeCount: prev.isLiked ? prev.likeCount - 1 : prev.likeCount + 1
+            liked_me: !prev.liked_me,
+            likeCount: prev.liked_me ? prev.likeCount - 1 : prev.likeCount + 1
         }));
-        const fireUtils = useFireStoreUtil();
-        const result = await fireUtils?.likingCard(blockItem?.id, user_id);
-        if (result) {
-            setBlockItem(prev => ({
-                ...prev,
-                isLiked: result.state,
-                likeCount: result.likeCount
-            }));
-            await toggleLike(blockItem?.id, user_id, blockItem?.title, blockItem?.productType, blockItem?.selectedTags, blockItem?.businessUser?.name)
-        }
+        let product_id = blockItem?._id
+        await toggleLike({ product_id, user_id })
     };
+
+    const nameOfSeller = useMemo(() => {
+        return (blockItem?.sellerName && blockItem?.sellerName?.length > 0) ? blockItem?.sellerName : (blockItem?.businessName && blockItem?.businessName?.length > 0) ? blockItem?.businessName : '--'
+    }, [blockItem?.sellerName, blockItem?.businessName])
 
 
     return (
@@ -94,16 +136,17 @@ const ProductBlock = ({
                         style={styles.sellerInfo}
                         onPress={() => {
                             navigation.navigate(AppRoutes?.SellerProfile, {
-                                seller_id: blockItem?.businessUser?.seller_id
+                                seller_id: blockItem?.sellerId,
+                                seller_name: blockItem?.sellerName
                             });
                         }}
                     >
                         <FastImage
-                            source={{ uri: blockItem?.businessUser?.photo }}
+                            source={blockItem?.sellerProfile ? { uri: blockItem?.sellerProfile ?? '' } : Images?.people}
                             style={styles.sellerImage}
                             resizeMode="contain"
                         />
-                        <Text style={styles.sellerName}>{blockItem?.businessUser?.name}</Text>
+                        <Text numberOfLines={2} ellipsizeMode="tail" style={styles.sellerName}>{nameOfSeller}</Text>
                     </Pressable>
                 }
 
@@ -113,7 +156,7 @@ const ProductBlock = ({
                         style={styles.followBtn}
                     >
                         <Text style={styles.followBtnText}>
-                            {blockItem?.follow ? "UnFollow" : "Follow"}
+                            {blockItem?.followed ? "UnFollow" : "Follow"}
                         </Text>
                     </TouchableOpacity>
                 }
@@ -137,7 +180,7 @@ const ProductBlock = ({
                             style={styles.productImagePressable}
                             onPress={() => {
                                 navigation.navigate(AppRoutes?.productDetail, {
-                                    productId: blockItem?.id
+                                    productId: blockItem?._id
                                 });
                             }}
                         >
@@ -186,7 +229,7 @@ const ProductBlock = ({
 
                     <Pressable onPress={LikingProduct} style={styles.bottomIconMargin}>
                         <Image
-                            source={blockItem?.isLiked ? Images.filledHeart : Images.Heart}
+                            source={blockItem?.liked_me ? Images.filledHeart : Images.Heart}
                             style={styles.bottomIcon}
                             resizeMode="contain"
                         />
@@ -201,13 +244,15 @@ const ProductBlock = ({
                 </View>
 
                 <View style={styles.bottomRight}>
-                    <Pressable onPress={toggleSavingCollection} style={styles.bottomIconMargin}>
-                        <Image
-                            source={blockItem?.saved ? Images.savedFilled : Images.saved}
-                            style={styles.bottomIcon}
-                            resizeMode="contain"
-                        />
-                    </Pressable>
+                    {savingState ?
+                        <ActivityIndicator />
+                        : <Pressable onPress={toggleSavingCollection} style={styles.bottomIconMargin}>
+                            <Image
+                                source={blockItem?.saved ? Images.savedFilled : Images.saved}
+                                style={styles.bottomIcon}
+                                resizeMode="contain"
+                            />
+                        </Pressable>}
 
                     <Pressable onPress={onSharePress} style={styles.bottomIconMargin}>
                         <Image source={Images.share} style={styles.bottomIcon} resizeMode="contain" />
@@ -240,22 +285,27 @@ const useStyles = () =>
         },
         sellerInfo: {
             flexDirection: 'row',
+            width: wp(60),
             alignItems: 'center'
         },
         sellerImage: {
             width: 50,
             height: 50,
+            borderWidth: 1,
+            borderColor: '#e9aea0',
             borderRadius: 25
         },
         sellerName: {
             marginLeft: 10,
-            fontSize: 18
+            fontSize: 18,
+            width: wp(50)
         },
         followBtn: {
             borderWidth: 1,
             borderColor: 'black',
             padding: 5,
-            paddingHorizontal: 20,
+            maxWidth: wp(30),
+            paddingHorizontal: 10,
             borderRadius: 15
         },
         followBtnText: {

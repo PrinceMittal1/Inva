@@ -1,20 +1,218 @@
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+// App.tsx
+import '@react-native-firebase/app';
+import React, { useEffect } from 'react';
 import {
+  Alert,
+  Linking,
+  PermissionsAndroid,
+  Platform,
   StyleSheet,
-  View,
 } from 'react-native';
 import { Provider } from "react-redux";
-import MainStack from './Source/Navigation/Stack';
+import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
+import MainStack from './Source/Navigation/Stack'; // adjust path if needed
 import { NavigationContainer } from '@react-navigation/native';
 import { store, persistor } from './Source/Redux/store';
 import { PersistGate } from "redux-persist/integration/react";
+import notifee, { AndroidImportance, EventType as NotifeeEventType } from '@notifee/react-native';
+import { initAppsFlyer } from './Source/Functions/AppsFlyerConfig'; // optional
+import { navigationRef, navigate } from './NavigationRef'; // adjust path if needed
+import AppRoutes from './Source/Routes/AppRoutes';
+import { updatingFCM } from './Source/Apis';
+
+// Request Android 13+ notification permission
+async function requestNotificationPermission(): Promise<boolean> {
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    );
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  }
+  return true;
+}
+
+// Show a Notifee local notification for foreground messages (attach data)
+async function handleForegroundMessage(remoteMessage: FirebaseMessagingTypes.RemoteMessage) {
+  try {
+    await notifee.displayNotification({
+      title: remoteMessage.notification?.title ?? 'New Notification',
+      body: remoteMessage.notification?.body ?? '',
+      android: {
+        channelId: 'default',
+        smallIcon: 'ic_launcher', // ensure this icon exists in android resources
+        pressAction: { id: 'default' },
+      },
+      data: remoteMessage.data ?? {}
+    });
+  } catch (err) {
+    console.warn('Error showing foreground notification', err);
+  }
+}
+
+// Normalize incoming data keys and navigate accordingly
+function handleNotificationNavigationFromData(data: { [k: string]: any }) {
+  if (!data) return;
+
+  // accept several key formats (camelCase / snake_case)
+  const productId = data.productId ?? data.product_id ?? data.productid ?? null;
+  const screen = data.screen ?? data.screenName ?? data.targetScreen ?? null;
+  const userId = data.userId ?? data.user_id ?? null;
+
+  if (screen === 'product_detail') {
+    if (productId && productId !== 'none' && productId !== 'null') {
+      navigate(AppRoutes?.productDetail, { productId: productId });
+      return;
+    } else {
+      console.log('Notification requested product_detail but productId missing.');
+    }
+  } else if (screen === 'chat') {
+    navigate(AppRoutes?.ChatListing, { userId });
+    return;
+  }
+
+  if (screen) {
+    try {
+      const params = data.params ? JSON.parse(data.params) : undefined;
+      navigate(screen, params);
+    } catch (e) {
+      console.warn('Failed to navigate to screen from notification (fallback):', e);
+    }
+  }
+}
 
 function App(): React.JSX.Element {
+  const linking = {
+    prefixes: ["myapp://", "https://api.inva.net.in"],
+    config: {
+      screens: {
+        ProductDetail: "product/:id",
+        // add other deep links if needed
+      },
+    },
+  };
+
+  useEffect(() => {
+    let unsubOnMessage: (() => void) | null = null;
+    let notifeeForegroundUnsub: (() => void) | null = null;
+
+    (async () => {
+      try {
+        const ok = await requestNotificationPermission();
+        if (!ok) {
+          Alert.alert(
+            'You declined notification permission',
+            'To receive important updates, please enable notifications in your device settings.',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Allow Notifications',
+                onPress: () => {
+                  // Open app settings
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                },
+              },
+            ]
+          );
+          return; // Exit early since permission is denied
+        }
+
+        // 2. create channel for Android
+        await notifee.createChannel({
+          id: 'default',
+          name: 'Default Channel',
+          importance: AndroidImportance.HIGH,
+        });
+
+        // 3. get FCM token
+        try {
+          const token = await messaging().getToken();
+          const state: any = store.getState();
+          if (token && state?.userData?.userData?._id && state?.userData?.userData?._id?.length > 0) {
+            let notification_token = token;
+            let user_id = state?.userData?.userData?._id;
+            const res = await updatingFCM({
+              user_id,
+              notification_token
+            });
+          }
+          console.log('FCM token:', token);
+          // send token to backend if necessary
+        } catch (err) {
+          console.warn('Failed to get FCM token', err);
+        }
+
+        // 4. foreground messages: show local notification and log the payload
+        unsubOnMessage = messaging().onMessage(async (remoteMessage) => {
+          console.log('FCM onMessage (foreground) FULL:', JSON.stringify(remoteMessage, null, 2));
+          await handleForegroundMessage(remoteMessage);
+        });
+
+        // 5. background tap (app in background, user taps notification)
+        messaging().onNotificationOpenedApp(remoteMessage => {
+          console.log('onNotificationOpenedApp FULL:', JSON.stringify(remoteMessage, null, 2));
+          const data = remoteMessage?.data ?? {};
+          console.log('onNotificationOpenedApp data:', data);
+          handleNotificationNavigationFromData(data);
+        });
+
+        // 6. app launched from killed state via notification
+        const initialNotification = await messaging().getInitialNotification();
+        if (initialNotification) {
+          console.log('getInitialNotification FULL:', JSON.stringify(initialNotification, null, 2));
+          // small delay to allow navigation stack to initialize
+          setTimeout(() => {
+            handleNotificationNavigationFromData(initialNotification.data ?? {});
+          }, 500);
+        }
+
+        // 7. Notifee foreground event listener (press while app in foreground)
+        notifeeForegroundUnsub = notifee.onForegroundEvent(({ type, detail }) => {
+          if (type === NotifeeEventType.PRESS) {
+            console.log('Notifee PRESS event (foreground) FULL:', JSON.stringify(detail, null, 2));
+            const data = detail.notification?.data ?? {};
+            console.log('Notifee press data:', data);
+            handleNotificationNavigationFromData(data);
+          }
+        });
+
+        // 8. Notifee initial notification (app opened from killed state via notifee)
+        const initialNotifee = await notifee.getInitialNotification();
+        if (initialNotifee?.notification) {
+          console.log('Notifee initial notification FULL:', JSON.stringify(initialNotifee, null, 2));
+          setTimeout(() => {
+            handleNotificationNavigationFromData(initialNotifee.notification.data ?? {});
+          }, 500);
+        }
+
+        // Optionally initialize AppsFlyer or other analytics
+        try {
+          initAppsFlyer();
+        } catch (err) {
+          console.warn('AppsFlyer init error:', err);
+        }
+      } catch (err) {
+        console.warn('Notification setup error:', err);
+      }
+    })();
+
+    // cleanup
+    return () => {
+      if (unsubOnMessage) unsubOnMessage();
+      if (notifeeForegroundUnsub) notifeeForegroundUnsub();
+    };
+  }, []);
+
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <NavigationContainer>
+        <NavigationContainer linking={linking} ref={navigationRef}>
           <MainStack />
         </NavigationContainer>
       </PersistGate>
